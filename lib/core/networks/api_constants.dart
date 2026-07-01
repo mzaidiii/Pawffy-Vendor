@@ -9,4 +9,11 @@ class ApiConstants {
   static const String forgotPassword = '/api/auth/forgot-password';
   static const String resetPassword = '/api/auth/reset-password';
   static const String changePassword = '/api/auth/change-password';
+
+  // ── Notifications ─────────────────────────────────
+  static const String notifications = '/api/notifications';
+  static const String markAllNotificationsRead = '/api/notifications/read-all';
+  static String markNotificationRead(String id) =>
+      '/api/notifications/$id/read';
+  static String deleteNotification(String id) => '/api/notifications/$id';
 }
