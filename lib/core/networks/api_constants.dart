@@ -16,4 +16,12 @@ class ApiConstants {
   static String markNotificationRead(String id) =>
       '/api/notifications/$id/read';
   static String deleteNotification(String id) => '/api/notifications/$id';
+
+  // ── Messages ──────────────────────────────────────
+  static const String conversations = '/api/messages/conversations';
+  static const String sendMessage = '/api/messages';
+  static String startChat(String receiverId) =>
+      '/api/messages/conversation/with/$receiverId';
+  static String messagesByConversation(String id) => '/api/messages/$id';
+  static String markConversationRead(String id) => '/api/messages/$id/read';
 }
