@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pawffy/features/auth/providers/current{_user_provider.dart';
 import 'package:pawffy/core/utils/location_provider.dart';
+import 'package:pawffy/features/message/message_screen.dart';
 import 'package:pawffy/features/notification/notification_screen.dart';
 import 'package:pawffy/features/notification/providers/notification_controller.dart';
 
@@ -15,7 +16,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _currentIndex = 0;
+  final int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +222,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: List.generate(items.length, (index) {
               final isActive = _currentIndex == index;
               return GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  if (index == 3) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (ctx) => MessageScreen()),
+                    );
+                  }
+                },
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
