@@ -7,6 +7,7 @@ import 'package:pawffy/core/utils/location_provider.dart';
 import 'package:pawffy/features/message/message_screen.dart';
 import 'package:pawffy/features/notification/notification_screen.dart';
 import 'package:pawffy/features/notification/providers/notification_controller.dart';
+import 'package:pawffy/features/profile/profile_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -227,6 +228,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (ctx) => MessageScreen()),
+                    );
+                  } else if (index == 4) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (ctx) => ProfileScreen()),
                     );
                   }
                 },
