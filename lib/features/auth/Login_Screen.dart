@@ -3,6 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pawffy/features/home/home_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pawffy/features/auth/providers/auth_controller.dart';
+import 'package:pawffy/features/auth/create_account_screen.dart';
+import 'package:pawffy/features/onboarding/screens/onboarding_flow_screen.dart';
+import 'package:pawffy/features/onboarding/providers/onboarding_provider.dart';
+
+
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -130,10 +135,48 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
+      print('DEBUG: [LoginScreen._handleLogin] Login success. Fetching onboarding status');
+      final onboardingService = ref.read(onboardingServiceProvider);
+      try {
+        final res = await onboardingService.getOnboardingState();
+        final ok = res['success'] as bool? ?? false;
+        
+        if (ok && res['data'] != null) {
+          final data = res['data'] as Map<String, dynamic>;
+          final business = data['business'] as Map<String, dynamic>?;
+          final status = business?['verificationStatus']?.toString() ?? 'draft';
+          print('DEBUG: [LoginScreen._handleLogin] Verification status is: $status');
+
+          if (!mounted) return;
+
+          if (status == 'pending' || status == 'verified') {
+            print('DEBUG: [LoginScreen._handleLogin] Routing to HomeScreen');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
+            );
+          } else {
+            print('DEBUG: [LoginScreen._handleLogin] Routing to OnboardingFlowScreen');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
+            );
+          }
+        } else {
+          print('DEBUG: [LoginScreen._handleLogin] Onboarding status load failed. Routing to OnboardingFlowScreen');
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
+          );
+        }
+      } catch (e, stack) {
+        print('DEBUG: [LoginScreen._handleLogin] Error loading onboarding: $e\n$stack. Routing to OnboardingFlowScreen');
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
+        );
+      }
     } else {
       final error = ref.read(authControllerProvider);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -147,6 +190,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -354,8 +398,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 GestureDetector(
                   onTap: () {
-                    // idhar signup screen ke lia navigate krenge
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CreateAccountScreen()),
+                    );
                   },
+
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 24),
                     child: RichText(
