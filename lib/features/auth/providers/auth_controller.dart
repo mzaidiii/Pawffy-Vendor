@@ -29,8 +29,38 @@ class AuthController extends AsyncNotifier<void> {
       state = const AsyncData(null);
 
       return true;
-    } catch (e) {
-      state = AsyncError(e, StackTrace.current);
+    } catch (e, stack) {
+      state = AsyncError(e, stack);
+      return false;
+    }
+  }
+
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String password,
+    required bool acceptTerms,
+  }) async {
+    state = const AsyncLoading();
+
+    try {
+      final authService = ref.read(authServiceProvider);
+
+      final response = await authService.register(
+        name: name,
+        email: email,
+        password: password,
+        acceptTerms: acceptTerms,
+      );
+
+      await StorageService.saveToken(response.token);
+      await StorageService.saveUserId(response.user.id);
+
+      state = const AsyncData(null);
+
+      return true;
+    } catch (e, stack) {
+      state = AsyncError(e, stack);
       return false;
     }
   }
