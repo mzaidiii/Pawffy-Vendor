@@ -2,8 +2,8 @@ class ApiConstants {
   static const String baseUrl = 'https://pawffy-backend.onrender.com';
 
   // ── Auth ──────────────────────────────────────────
-  static const String login = '/api/auth/login';
-  static const String register = '/api/auth/register';
+  static const String login = '/api/auth/vendor/login';
+  static const String register = '/api/auth/vendor/register';
   static const String me = '/api/auth/me';
   static const String logout = '/api/auth/logout';
   static const String forgotPassword = '/api/auth/forgot-password';
@@ -24,4 +24,18 @@ class ApiConstants {
       '/api/messages/conversation/with/$receiverId';
   static String messagesByConversation(String id) => '/api/messages/$id';
   static String markConversationRead(String id) => '/api/messages/$id/read';
+  // ── Onboarding ─────────────────────────────────────
+  static const String onboarding = '/api/vendor/onboarding';
+  static const String onboardingBusiness = '/api/vendor/onboarding/business';
+  static const String onboardingServices = '/api/vendor/onboarding/services';
+  static String onboardingServiceById(String id) =>
+      '/api/vendor/onboarding/services/$id';
+  static const String onboardingAvailability =
+      '/api/vendor/onboarding/availability';
+  static const String onboardingDocuments = '/api/vendor/onboarding/documents';
+  static String onboardingDocumentById(String id) =>
+      '/api/vendor/onboarding/documents/$id';
+  static const String onboardingReview = '/api/vendor/onboarding/review';
+  static const String onboardingSubmit = '/api/vendor/onboarding/submit';
+  static const String vendorDashboard = '/api/vendor/dashboard';
 }
