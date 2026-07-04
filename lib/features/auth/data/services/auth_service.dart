@@ -21,6 +21,32 @@ class AuthService {
       return AuthResponseModel.fromJson(response.data);
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Login failed');
+    } catch (e, stack) {
+      rethrow;
+    }
+  }
+
+  Future<AuthResponseModel> register({
+    required String name,
+    required String email,
+    required String password,
+    required bool acceptTerms,
+  }) async {
+    try {
+      final payload = {
+        'name': name,
+        'email': email,
+        'password': password,
+        'acceptTerms': acceptTerms,
+      };
+
+      final response = await _dio.post(ApiConstants.register, data: payload);
+
+      return AuthResponseModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Registration failed');
+    } catch (e, stack) {
+      rethrow;
     }
   }
 
