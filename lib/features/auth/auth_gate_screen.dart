@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pawffy/features/auth/Onboarding_Screen.dart';
+import 'package:pawffy/features/onboarding/providers/onboarding_provider.dart';
+import 'package:pawffy/features/onboarding/screens/onboarding_flow_screen.dart';
 
 import '../home/home_screen.dart';
 import 'providers/auth_controller.dart';
@@ -26,14 +28,48 @@ class _AuthGateScreenState extends ConsumerState<AuthGateScreen> {
       if (!mounted) return;
 
       if (user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
+        final onboardingService = ref.read(onboardingServiceProvider);
+
+        try {
+          final res = await onboardingService.getOnboardingState();
+          final success = res['success'] as bool? ?? false;
+
+          if (success && res['data'] != null) {
+            final data = res['data'] as Map<String, dynamic>;
+            final business = data['business'] as Map<String, dynamic>?;
+            final status =
+                business?['verificationStatus']?.toString() ?? 'draft';
+
+            if (!mounted) return;
+
+            if (status == 'pending' || status == 'verified') {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const HomeScreen()),
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
+              );
+            }
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
+            );
+          }
+        } catch (e, stack) {
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
+          );
+        }
       } else {
         _goToOnboarding();
       }
-    } catch (_) {
+    } catch (e, stack) {
       if (!mounted) return;
       _goToOnboarding();
     }
