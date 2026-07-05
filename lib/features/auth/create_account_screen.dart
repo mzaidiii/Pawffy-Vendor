@@ -169,7 +169,19 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: size.height * 0.04),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.maybePop(context),
+                      child: const Icon(
+                        Icons.arrow_back_ios,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: size.height * 0.035),
                 SizedBox(
                   width: double.infinity,
                   child: Column(
@@ -178,45 +190,48 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              'CREATE,',
-                              style: GoogleFonts.archivoBlack(
-                                fontSize: 45,
-                                fontWeight: FontWeight.w400,
-                                height: 1.0,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
                         child: Text(
-                          'ACCOUNT',
+                          'CREATE',
                           style: GoogleFonts.archivoBlack(
                             fontSize: 45,
                             fontWeight: FontWeight.w400,
                             height: 1.0,
-                            color: const Color.fromARGB(255, 238, 90, 4),
+                            color: Colors.white,
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'ACCOUNT!',
+                          style: GoogleFonts.archivoBlack(
+                            fontSize: 45,
+                            fontWeight: FontWeight.w400,
+                            height: 1.0,
+                            color: const Color(0xFFE85D04),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        "Let's get started with your details",
+                        style: GoogleFonts.barlow(
+                          color: Colors.grey,
+                          fontSize: 14,
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                SizedBox(height: size.height * 0.05),
+                SizedBox(height: size.height * 0.045),
 
                 _buildTextField(
                   controller: _nameController,
                   focusNode: _nameFocus,
-                  hint: 'Full Name',
+                  hint: 'Name',
                   icon: Icons.person_outline,
                   errorText: _nameError,
                   onChanged: (_) {
@@ -306,18 +321,31 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                           _acceptTerms = val ?? false;
                         });
                       },
+                      activeColor: const Color(0xFFE85D04),
                       side: const BorderSide(
                         color: Color(0xFFE85D04),
                         width: 1.5,
                       ),
                     ),
                     Expanded(
-                      child: Text(
-                        'I accept the terms and conditions',
-                        style: GoogleFonts.barlow(
-                          color: Colors.white70,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                      child: RichText(
+                        text: TextSpan(
+                          text: 'I agree to the ',
+                          style: GoogleFonts.barlow(
+                            color: Colors.white70,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: 'Terms & Conditions',
+                              style: GoogleFonts.barlow(
+                                color: const Color(0xFFE85D04),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -326,45 +354,57 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
                 const SizedBox(height: 24),
 
-                ElevatedButton(
-                  onPressed: authState.isLoading ? null : _handleRegister,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE85D04),
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(
-                      0xFFE85D04,
-                    ).withOpacity(0.6),
-                    minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: ElevatedButton(
+                    key: ValueKey(authState.isLoading),
+                    onPressed: authState.isLoading ? null : _handleRegister,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE85D04),
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: const Color(
+                        0xFFE85D04,
+                      ).withOpacity(0.6),
+                      minimumSize: const Size(double.infinity, 52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                     ),
-                  ),
-                  child: authState.isLoading
-                      ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'CREATE ACCOUNT',
-                              style: GoogleFonts.barlow(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.5,
-                              ),
+                    child: authState.isLoading
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
                             ),
-                            const SizedBox(width: 8),
-                            const Icon(Icons.arrow_outward, size: 18),
-                          ],
-                        ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'SIGN UP',
+                                style: GoogleFonts.barlow(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_outward, size: 18),
+                            ],
+                          ),
+                  ),
                 ),
-                const SizedBox(height: 22),
+
+                const SizedBox(height: 20),
+
+                Text(
+                  'Or Sign up With',
+                  style: GoogleFonts.barlow(color: Colors.grey, fontSize: 13),
+                ),
+
+                const SizedBox(height: 18),
 
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
@@ -372,7 +412,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                     padding: const EdgeInsets.only(bottom: 24),
                     child: RichText(
                       text: TextSpan(
-                        text: "Already have an account? ",
+                        text: 'Already have an account? ',
                         style: GoogleFonts.barlow(
                           color: Colors.white,
                           fontSize: 13,
@@ -380,7 +420,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                         ),
                         children: [
                           TextSpan(
-                            text: 'Log In',
+                            text: 'Login',
                             style: GoogleFonts.barlow(
                               color: const Color(0xFFE85D04),
                               fontSize: 13,
@@ -420,53 +460,69 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
-          controller: controller,
-          focusNode: focusNode,
-          obscureText: isPassword ? obscureText : false,
-          keyboardType: keyboardType,
-          textInputAction: isPassword
-              ? TextInputAction.done
-              : TextInputAction.next,
-          style: GoogleFonts.barlow(color: textColor),
-          onChanged: onChanged,
-          onSubmitted: onSubmitted,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.barlow(
-              color: hintColor,
-              fontWeight: FontWeight.w400,
-            ),
-            prefixIcon: Icon(icon, color: hintColor, size: 20),
-            suffixIcon: isPassword
-                ? IconButton(
-                    icon: Icon(
-                      obscureText
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      color: hintColor,
-                      size: 20,
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: focusNode != null && focusNode.hasFocus
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFFE85D04).withOpacity(0.25),
+                      blurRadius: 12,
+                      spreadRadius: 1,
                     ),
-                    onPressed: onObscureToggle,
-                  )
-                : null,
-            filled: true,
-            fillColor: fillColor,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: errorText != null
-                  ? const BorderSide(color: Colors.redAccent, width: 1.2)
-                  : BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: errorText != null
-                  ? const BorderSide(color: Colors.redAccent, width: 1.5)
-                  : const BorderSide(color: Color(0xFFE85D04), width: 1.5),
+                  ]
+                : [],
+          ),
+          child: TextField(
+            controller: controller,
+            focusNode: focusNode,
+            obscureText: isPassword ? obscureText : false,
+            keyboardType: keyboardType,
+            textInputAction: isPassword
+                ? TextInputAction.done
+                : TextInputAction.next,
+            style: GoogleFonts.barlow(color: textColor),
+            onChanged: onChanged,
+            onSubmitted: onSubmitted,
+            onTap: () => setState(() {}),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: GoogleFonts.barlow(
+                color: hintColor,
+                fontWeight: FontWeight.w400,
+              ),
+              prefixIcon: Icon(icon, color: hintColor, size: 20),
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        obscureText
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: hintColor,
+                        size: 20,
+                      ),
+                      onPressed: onObscureToggle,
+                    )
+                  : null,
+              filled: true,
+              fillColor: fillColor,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30),
+                borderSide: errorText != null
+                    ? const BorderSide(color: Colors.redAccent, width: 1.2)
+                    : BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30),
+                borderSide: errorText != null
+                    ? const BorderSide(color: Colors.redAccent, width: 1.5)
+                    : const BorderSide(color: Color(0xFFE85D04), width: 1.5),
+              ),
             ),
           ),
         ),
