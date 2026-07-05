@@ -38,4 +38,9 @@ class ApiConstants {
   static const String onboardingReview = '/api/vendor/onboarding/review';
   static const String onboardingSubmit = '/api/vendor/onboarding/submit';
   static const String vendorDashboard = '/api/vendor/dashboard';
+
+  // ── Home ──────────────────────────────────────────
+  static const String home = '/api/vendor/home';
+  static const String status = '/api/vendor/status';
+  static const String notificationsUnreadCount = '/api/vendor/notifications/unread-count';
 }
