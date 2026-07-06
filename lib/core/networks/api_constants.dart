@@ -43,4 +43,9 @@ class ApiConstants {
   static const String home = '/api/vendor/home';
   static const String status = '/api/vendor/status';
   static const String notificationsUnreadCount = '/api/vendor/notifications/unread-count';
+
+  // ── Calendar ──────────────────────────────────────
+  static const String calendar = '/api/vendor/calendar';
+  static const String blockedDates = '/api/vendor/blocked-dates';
+  static String deleteBlockedDate(String id) => '/api/vendor/blocked-dates/$id';
 }
