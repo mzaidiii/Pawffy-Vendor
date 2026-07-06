@@ -8,6 +8,8 @@ import 'package:pawffy/core/utils/location_provider.dart';
 import 'package:pawffy/features/message/message_screen.dart';
 import 'package:pawffy/features/notification/notification_screen.dart';
 import 'package:pawffy/features/profile/profile_screen.dart';
+import 'package:pawffy/features/calendar/calendar_screen.dart';
+import 'package:pawffy/features/home/providers/home_provider.dart';
 import 'package:pawffy/main.dart';
 
 import 'data/models/home_data_model.dart';
@@ -21,32 +23,25 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _currentIndex = 0;
-
-  List<Widget> _pages = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _pages = [
-      const HomeTabBody(),
-      const RequestsTabPlaceholder(),
-      const CalendarTabPlaceholder(),
-      const MessageScreen(),
-      const ProfileScreen(),
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentIndex = ref.watch(navigationIndexProvider);
     SystemChrome.setSystemUIOverlayStyle(
       isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
     );
 
+    final pages = [
+      const HomeTabBody(),
+      const RequestsTabPlaceholder(),
+      const CalendarScreen(),
+      const MessageScreen(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: IndexedStack(index: currentIndex, children: pages),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -85,13 +80,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(items.length, (index) {
-              final isActive = _currentIndex == index;
+              final currentIndex = ref.watch(navigationIndexProvider);
+              final isActive = currentIndex == index;
               return GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
-                  setState(() {
-                    _currentIndex = index;
-                  });
+                  ref.read(navigationIndexProvider.notifier).setIndex(index);
                 },
                 child: SizedBox(
                   width: 65,
@@ -160,7 +154,8 @@ class HomeTabBody extends ConsumerWidget {
           child: RefreshIndicator(
             color: AppColors.orange,
             backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-            onRefresh: () => ref.read(homeControllerProvider.notifier).refresh(),
+            onRefresh: () =>
+                ref.read(homeControllerProvider.notifier).refresh(),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Padding(
@@ -168,279 +163,290 @@ class HomeTabBody extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Top location and Notification bar
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () => ref.refresh(positionProvider),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on_rounded,
-                              color: AppColors.orange,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              header.location.isNotEmpty
-                                  ? header.location
-                                  : (locationAsync.value ?? 'Ghaziabad, UP'),
-                              style: GoogleFonts.barlow(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.6),
-                              size: 18,
-                            ),
-                          ],
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (ctx) => const NotificationScreen(),
-                            ),
-                          );
-                        },
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? AppColors.darkSurface
-                                    : Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: (isDark ? Colors.white : Colors.black)
-                                      .withOpacity(0.08),
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.notifications_none_rounded,
-                                color: Theme.of(context).colorScheme.onSurface,
-                                size: 20,
-                              ),
-                            ),
-                            if (header.unreadNotifications > 0)
-                              Positioned(
-                                top: -2,
-                                right: -2,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.orange,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 16,
-                                    minHeight: 16,
-                                  ),
-                                  child: Text(
-                                    '${header.unreadNotifications}',
-                                    style: GoogleFonts.barlow(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Welcome and Status capsule row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Welcome,',
-                              style: GoogleFonts.barlow(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.7),
-                              ),
-                            ),
-                            Text(
-                              header.name.toUpperCase(),
-                              style: GoogleFonts.barlow(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w900,
-                                color: Theme.of(context).colorScheme.onSurface,
-                                letterSpacing: 0.5,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      _buildOnlineStatusCapsule(context, ref, header.isOnline),
-                    ],
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // Search Bar
-                  Container(
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkSurface : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: (isDark ? Colors.white : Colors.black)
-                            .withOpacity(0.08),
-                      ),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
+                    // Top location and Notification bar
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          Icons.search_rounded,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.5),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextField(
-                            readOnly: true,
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Search is only available inside Requests tab',
-                                    style: GoogleFonts.barlow(),
-                                  ),
-                                  backgroundColor: AppColors.orange,
+                        GestureDetector(
+                          onTap: () => ref.refresh(positionProvider),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on_rounded,
+                                color: AppColors.orange,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                header.location.isNotEmpty
+                                    ? header.location
+                                    : (locationAsync.value ?? 'Ghaziabad, UP'),
+                                style: GoogleFonts.barlow(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
                                 ),
-                              );
-                            },
-                            decoration: InputDecoration(
-                              hintText: 'Search by Store Name...',
-                              hintStyle: GoogleFonts.barlow(
-                                fontSize: 14,
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.keyboard_arrow_down_rounded,
                                 color: Theme.of(
                                   context,
-                                ).colorScheme.onSurface.withOpacity(0.5),
+                                ).colorScheme.onSurface.withOpacity(0.6),
+                                size: 18,
                               ),
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              contentPadding: EdgeInsets.zero,
-                            ),
+                            ],
                           ),
                         ),
-                        Icon(
-                          Icons.tune_rounded,
-                          color: AppColors.orange,
-                          size: 20,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (ctx) => const NotificationScreen(),
+                              ),
+                            );
+                          },
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? AppColors.darkSurface
+                                      : Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color:
+                                        (isDark ? Colors.white : Colors.black)
+                                            .withOpacity(0.08),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.notifications_none_rounded,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                  size: 20,
+                                ),
+                              ),
+                              if (header.unreadNotifications > 0)
+                                Positioned(
+                                  top: -2,
+                                  right: -2,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.orange,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    child: Text(
+                                      '${header.unreadNotifications}',
+                                      style: GoogleFonts.barlow(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
 
-                  const SizedBox(height: 18),
+                    const SizedBox(height: 20),
 
-                  // 1. Application Status Card (conditional)
-                  if (appStatus.status != 'verified')
-                    _buildApplicationStatusCard(context, appStatus),
-
-                  const SizedBox(height: 16),
-
-                  // 2. Carousel Banner
-                  _buildRequestBanner(context, banner),
-
-                  const SizedBox(height: 24),
-
-                  // 3. TODAY AT A GLANCE
-                  Text(
-                    'TODAY AT A GLANCE',
-                    style: GoogleFonts.barlow(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.8,
-                      color: Theme.of(context).colorScheme.onSurface,
+                    // Welcome and Status capsule row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Welcome,',
+                                style: GoogleFonts.barlow(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.7),
+                                ),
+                              ),
+                              Text(
+                                header.name.toUpperCase(),
+                                style: GoogleFonts.barlow(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                  letterSpacing: 0.5,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        _buildOnlineStatusCapsule(
+                          context,
+                          ref,
+                          header.isOnline,
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTodayGlanceGrid(context, glance),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 18),
 
-                  // 4. UPCOMING BOOKINGS
-                  Text(
-                    'UPCOMING BOOKINGS',
-                    style: GoogleFonts.barlow(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.8,
-                      color: Theme.of(context).colorScheme.onSurface,
+                    // Search Bar
+                    Container(
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkSurface : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: (isDark ? Colors.white : Colors.black)
+                              .withOpacity(0.08),
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.search_rounded,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.5),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              readOnly: true,
+                              onTap: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Search is only available inside Requests tab',
+                                      style: GoogleFonts.barlow(),
+                                    ),
+                                    backgroundColor: AppColors.orange,
+                                  ),
+                                );
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Search by Store Name...',
+                                hintStyle: GoogleFonts.barlow(
+                                  fontSize: 14,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.5),
+                                ),
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.tune_rounded,
+                            color: AppColors.orange,
+                            size: 20,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildUpcomingBookings(
-                    context,
-                    bookings,
-                    appStatus.isPending,
-                  ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 18),
 
-                  // 5. QUICK ACTIONS
-                  Text(
-                    'QUICK ACTIONS',
-                    style: GoogleFonts.barlow(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.8,
-                      color: Theme.of(context).colorScheme.onSurface,
+                    // 1. Application Status Card (conditional)
+                    if (appStatus.status != 'verified')
+                      _buildApplicationStatusCard(context, appStatus),
+
+                    const SizedBox(height: 16),
+
+                    // 2. Carousel Banner
+                    _buildRequestBanner(context, banner),
+
+                    const SizedBox(height: 24),
+
+                    // 3. TODAY AT A GLANCE
+                    Text(
+                      'TODAY AT A GLANCE',
+                      style: GoogleFonts.barlow(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildQuickActionsGrid(context),
+                    const SizedBox(height: 12),
+                    _buildTodayGlanceGrid(context, glance),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 24),
 
-                  // 6. Grow your Business Banner
-                  _buildPremiumBanner(context),
+                    // 4. UPCOMING BOOKINGS
+                    Text(
+                      'UPCOMING BOOKINGS',
+                      style: GoogleFonts.barlow(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildUpcomingBookings(
+                      context,
+                      bookings,
+                      appStatus.isPending,
+                    ),
 
-                  const SizedBox(height: 32),
-                ],
+                    const SizedBox(height: 24),
+
+                    // 5. QUICK ACTIONS
+                    Text(
+                      'QUICK ACTIONS',
+                      style: GoogleFonts.barlow(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildQuickActionsGrid(context),
+
+                    const SizedBox(height: 20),
+
+                    // 6. Grow your Business Banner
+                    _buildPremiumBanner(context),
+
+                    const SizedBox(height: 32),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      );
-    },
+        );
+      },
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator(color: AppColors.orange)),
       ),
@@ -1690,8 +1696,6 @@ class HomeTabBody extends ConsumerWidget {
   }
 }
 
-// ── Tab Placeholders ──────────────────────────────────────────
-
 class RequestsTabPlaceholder extends StatelessWidget {
   const RequestsTabPlaceholder({super.key});
 
@@ -1810,7 +1814,6 @@ class CalendarTabPlaceholder extends StatelessWidget {
   }
 }
 
-// SystemThemeCompat helper to handle modern CachedNetworkImage fit patterns safely.
 class SystemThemeCompat {
   static const fitType = BoxFit.cover;
 }
