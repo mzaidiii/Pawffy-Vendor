@@ -51,4 +51,9 @@ class ApiConstants {
   static const String blockedDates = '/api/vendor/blocked-dates';
   static String deleteBlockedDate(String id) => '/api/vendor/blocked-dates/$id';
   static const String availability = '/api/vendor/availability';
+
+  // Requests
+  static const String requests = '/api/vendor/requests';
+  static String acceptRequest(String id) => '/api/vendor/requests/$id/accept';
+  static String rejectRequest(String id) => '/api/vendor/requests/$id/reject';
 }
