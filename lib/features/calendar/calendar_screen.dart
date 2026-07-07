@@ -8,12 +8,10 @@ import 'package:pawffy/main.dart';
 import 'package:pawffy/features/home/providers/home_provider.dart';
 import 'package:pawffy/features/home/providers/home_controller.dart';
 import 'package:pawffy/features/home/data/models/home_data_model.dart';
-import 'package:pawffy/features/onboarding/providers/onboarding_provider.dart';
 import 'package:pawffy/features/notification/notification_screen.dart';
 import 'package:pawffy/features/notification/providers/notification_controller.dart';
 
 import 'data/models/calendar_day_model.dart';
-import 'data/models/blocked_date_model.dart';
 import 'providers/calendar_providers.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -1043,9 +1041,12 @@ class __ManageAvailabilityBottomSheetState
 
   Future<void> _loadAvailability() async {
     try {
-      final res = await ref.read(onboardingServiceProvider).getOnboardingState();
+      final res = await ref.read(calendarServiceProvider).getAvailability();
       if (res['success'] == true && res['data'] != null) {
-        final avail = res['data']['availability'];
+        final data = res['data'];
+        final avail = (data is Map && data.containsKey('availability'))
+            ? data['availability']
+            : data;
         if (avail != null) {
           setState(() {
             _workingDays = List<String>.from(avail['workingDays'] ?? []);
@@ -1096,7 +1097,7 @@ class __ManageAvailabilityBottomSheetState
   Future<void> _save() async {
     setState(() => _isLoading = true);
     try {
-      final response = await ref.read(onboardingServiceProvider).setAvailability(
+      final response = await ref.read(calendarServiceProvider).updateAvailability(
             workingDays: _workingDays,
             startTime: _startTime,
             endTime: _endTime,
