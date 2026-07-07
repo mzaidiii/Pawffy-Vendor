@@ -12,11 +12,12 @@ class MessageService {
     return Options(headers: {'Authorization': 'Bearer $token'});
   }
 
-  Future<List<ConversationModel>> getConversations() async {
+  Future<List<ConversationModel>> getConversations({String? search}) async {
     try {
       final options = await _getOptions();
       final response = await _dio.get(
-        ApiConstants.conversations,
+        ApiConstants.vendorChats,
+        queryParameters: search != null && search.isNotEmpty ? {'search': search} : null,
         options: options,
       );
       final dynamic body = response.data;
