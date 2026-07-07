@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pawffy/main.dart';
-import '../home/home_screen.dart';
 import 'chat_screen.dart';
 import 'providers/message_controller.dart';
 import 'data/models/message_model.dart';
@@ -367,56 +366,6 @@ class _MessageScreenState extends ConsumerState<MessageScreen> {
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              _searchQuery.isNotEmpty
-                  ? 'Try searching for something else'
-                  : 'Book a service and start a\nconversation with a provider',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.barlow(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: AppColors.grey,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 28),
-            if (_searchQuery.isEmpty)
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => const HomeScreen()),
-                    (route) => false,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.orange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Explore Services',
-                      style: GoogleFonts.barlow(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_outward, size: 16),
-                  ],
-                ),
-              ),
           ],
         ),
       ),
