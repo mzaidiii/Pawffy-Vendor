@@ -93,4 +93,54 @@ class CalendarService {
       throw Exception('An unexpected error occurred: $e');
     }
   }
+
+  Future<Map<String, dynamic>> getAvailability() async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.availability,
+        options: await _authHeader,
+      );
+      if (response.data != null && response.data is Map) {
+        return response.data as Map<String, dynamic>;
+      }
+      return {'success': false, 'message': 'Invalid response'};
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Failed to get availability',
+      );
+    } catch (e) {
+      throw Exception('An unexpected error occurred: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateAvailability({
+    required List<String> workingDays,
+    required String startTime,
+    required String endTime,
+    required bool sameDayRequests,
+  }) async {
+    try {
+      final payload = {
+        'workingDays': workingDays,
+        'startTime': startTime,
+        'endTime': endTime,
+        'sameDayRequests': sameDayRequests,
+      };
+      final response = await _dio.put(
+        ApiConstants.availability,
+        data: payload,
+        options: await _authHeader,
+      );
+      if (response.data != null && response.data is Map) {
+        return response.data as Map<String, dynamic>;
+      }
+      return {'success': false, 'message': 'Invalid response'};
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Failed to update availability',
+      );
+    } catch (e) {
+      throw Exception('An unexpected error occurred: $e');
+    }
+  }
 }
