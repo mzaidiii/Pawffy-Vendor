@@ -9,6 +9,7 @@ import 'package:pawffy/features/message/message_screen.dart';
 import 'package:pawffy/features/notification/notification_screen.dart';
 import 'package:pawffy/features/profile/profile_screen.dart';
 import 'package:pawffy/features/calendar/calendar_screen.dart';
+import 'package:pawffy/features/requests/screens/requests_screen.dart';
 import 'package:pawffy/features/home/providers/home_provider.dart';
 import 'package:pawffy/main.dart';
 
@@ -33,7 +34,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final pages = [
       const HomeTabBody(),
-      const RequestsTabPlaceholder(),
+      const RequestsScreen(),
       const CalendarScreen(),
       const MessageScreen(),
       const ProfileScreen(),
@@ -1696,64 +1697,7 @@ class HomeTabBody extends ConsumerWidget {
   }
 }
 
-class RequestsTabPlaceholder extends StatelessWidget {
-  const RequestsTabPlaceholder({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
-              Text(
-                'REQUESTS',
-                style: GoogleFonts.barlow(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.assignment_outlined,
-                        size: 64,
-                        color: AppColors.orange,
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        'Requests Flow Screen Placeholder',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      SizedBox(height: 6),
-                      Text(
-                        'This screen manages your incoming requests and booking history.',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+// Requests screen is now fully integrated.
 
 class CalendarTabPlaceholder extends StatelessWidget {
   const CalendarTabPlaceholder({super.key});
