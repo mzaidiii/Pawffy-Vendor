@@ -7,7 +7,7 @@ final messageServiceProvider = Provider<MessageService>(
 );
 
 final conversationsControllerProvider =
-    AsyncNotifierProvider<ConversationsController, List<ConversationModel>>(
+    AsyncNotifierProvider.autoDispose<ConversationsController, List<ConversationModel>>(
       ConversationsController.new,
     );
 
@@ -18,11 +18,9 @@ class ConversationsController extends AsyncNotifier<List<ConversationModel>> {
   }
 
   Future<void> refresh() async {
-    state = const AsyncLoading();
     try {
-      state = AsyncData(
-        await ref.read(messageServiceProvider).getConversations(),
-      );
+      final conversations = await ref.read(messageServiceProvider).getConversations();
+      state = AsyncData(conversations);
     } catch (e) {
       state = AsyncError(e, StackTrace.current);
     }
