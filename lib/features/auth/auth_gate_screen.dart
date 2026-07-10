@@ -59,7 +59,7 @@ class _AuthGateScreenState extends ConsumerState<AuthGateScreen> {
               MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
             );
           }
-        } catch (e, stack) {
+        } catch (e) {
           if (!mounted) return;
           Navigator.pushReplacement(
             context,
@@ -69,7 +69,7 @@ class _AuthGateScreenState extends ConsumerState<AuthGateScreen> {
       } else {
         _goToOnboarding();
       }
-    } catch (e, stack) {
+    } catch (e) {
       if (!mounted) return;
       _goToOnboarding();
     }
