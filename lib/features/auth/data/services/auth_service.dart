@@ -21,7 +21,7 @@ class AuthService {
       return AuthResponseModel.fromJson(response.data);
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Login failed');
-    } catch (e, stack) {
+    } catch (e) {
       rethrow;
     }
   }
@@ -45,7 +45,7 @@ class AuthService {
       return AuthResponseModel.fromJson(response.data);
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Registration failed');
-    } catch (e, stack) {
+    } catch (e) {
       rethrow;
     }
   }
@@ -104,6 +104,79 @@ class AuthService {
       );
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Logout failed');
+    }
+  }
+
+  Future<void> requestEmailChange({
+    required String newEmail,
+    required String password,
+    required String token,
+  }) async {
+    try {
+      await _dio.post(
+        ApiConstants.requestEmailChange,
+        data: {'newEmail': newEmail, 'password': password},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Failed to request email change',
+      );
+    }
+  }
+
+  Future<String> verifyEmailChange({
+    required String newEmail,
+    required String verificationToken,
+    required String token,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.verifyEmailChange,
+        data: {'newEmail': newEmail, 'token': verificationToken},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return response.data['data']['token'] as String;
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Email verification failed',
+      );
+    }
+  }
+
+  Future<void> requestPhoneChange({
+    required String newPhone,
+    required String token,
+  }) async {
+    try {
+      await _dio.post(
+        ApiConstants.requestPhoneChange,
+        data: {'newPhone': newPhone},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Failed to request phone change',
+      );
+    }
+  }
+
+  Future<String> verifyPhoneChange({
+    required String newPhone,
+    required String otp,
+    required String token,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.verifyPhoneChange,
+        data: {'newPhone': newPhone, 'otp': otp},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      return response.data['data']['token'] as String;
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Phone verification failed',
+      );
     }
   }
 }
