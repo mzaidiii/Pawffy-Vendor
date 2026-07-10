@@ -64,9 +64,8 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
           loading: () => const Center(
             child: CircularProgressIndicator(color: AppColors.orange),
           ),
-          error: (error, _) => Center(
-            child: Text('Error loading dashboard: $error'),
-          ),
+          error: (error, _) =>
+              Center(child: Text('Error loading dashboard: $error')),
           data: (homeData) {
             final isVerified = homeData?.applicationStatus.isVerified ?? false;
 
@@ -161,20 +160,33 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: AppColors.error,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Failed to load requests',
-                      style: GoogleFonts.barlow(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.barlow(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    Text(err.toString(), style: const TextStyle(color: AppColors.grey)),
+                    Text(
+                      err.toString(),
+                      style: const TextStyle(color: AppColors.grey),
+                    ),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange),
-                      onPressed: () => ref.read(requestsNotifierProvider.notifier).refresh(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.orange,
+                      ),
+                      onPressed: () =>
+                          ref.read(requestsNotifierProvider.notifier).refresh(),
                       child: const Text('RETRY'),
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -200,8 +212,11 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Requests for status "${_activeStatus}" will appear here.',
-                          style: const TextStyle(color: AppColors.grey, fontSize: 13),
+                          'Requests for status "$_activeStatus" will appear here.',
+                          style: const TextStyle(
+                            color: AppColors.grey,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
@@ -210,9 +225,12 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
 
                 return RefreshIndicator(
                   color: AppColors.orange,
-                  onRefresh: () => ref.read(requestsNotifierProvider.notifier).refresh(),
+                  onRefresh: () =>
+                      ref.read(requestsNotifierProvider.notifier).refresh(),
                   child: ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
                     itemCount: requests.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
@@ -286,7 +304,9 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
               color: isDark ? AppColors.darkCard : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.08) : Colors.grey.shade200,
+                color: isDark
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.grey.shade200,
                 width: 1,
               ),
             ),
@@ -321,11 +341,7 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
             color: AppColors.orange,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: const Icon(
-            Icons.tune_rounded,
-            color: Colors.white,
-            size: 24,
-          ),
+          child: const Icon(Icons.tune_rounded, color: Colors.white, size: 24),
         ),
       ],
     );
@@ -351,14 +367,19 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
             child: GestureDetector(
               onTap: () => _changeStatus(entry.key),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.orange : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
                         ? AppColors.orange
-                        : (isDark ? Colors.white.withOpacity(0.12) : Colors.grey.shade300),
+                        : (isDark
+                              ? Colors.white.withOpacity(0.12)
+                              : Colors.grey.shade300),
                     width: 1,
                   ),
                 ),
@@ -370,7 +391,9 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
                           ? Colors.white
                           : (isDark ? Colors.white70 : Colors.black87),
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -382,16 +405,18 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
     );
   }
 
-  Widget _buildRequestCard(BuildContext context, RequestModel req, bool isDark) {
+  Widget _buildRequestCard(
+    BuildContext context,
+    RequestModel req,
+    bool isDark,
+  ) {
     final hasPetPhoto = req.pet?.photo != null && req.pet!.photo!.isNotEmpty;
 
     return InkWell(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => RequestDetailsScreen(request: req),
-          ),
+          MaterialPageRoute(builder: (_) => RequestDetailsScreen(request: req)),
         ).then((_) {
           // Refresh list on return in case status was updated
           ref.read(requestsNotifierProvider.notifier).refresh();
@@ -404,7 +429,9 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
           color: isDark ? AppColors.darkCard : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade200,
+            color: isDark
+                ? Colors.white.withOpacity(0.06)
+                : Colors.grey.shade200,
             width: 1,
           ),
           boxShadow: [
@@ -435,10 +462,14 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
                         child: SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.orange),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.orange,
+                          ),
                         ),
                       ),
-                      errorWidget: (_, __, ___) => _buildFallbackAvatar(req.pet?.name ?? 'P'),
+                      errorWidget: (_, __, ___) =>
+                          _buildFallbackAvatar(req.pet?.name ?? 'P'),
                     )
                   : _buildFallbackAvatar(req.pet?.name ?? 'P'),
             ),
@@ -462,7 +493,10 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
                       ),
                       if (req.status == 'pending')
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.orange.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(6),
@@ -493,12 +527,18 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
                   const SizedBox(height: 6),
                   Divider(
                     height: 1,
-                    color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade100,
+                    color: isDark
+                        ? Colors.white.withOpacity(0.06)
+                        : Colors.grey.shade100,
                   ),
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.pets_outlined, size: 14, color: AppColors.orange),
+                      const Icon(
+                        Icons.pets_outlined,
+                        size: 14,
+                        color: AppColors.orange,
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -515,12 +555,19 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.orange),
+                      const Icon(
+                        Icons.calendar_today_outlined,
+                        size: 14,
+                        color: AppColors.orange,
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           req.time,
-                          style: const TextStyle(fontSize: 12, color: AppColors.grey),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.grey,
+                          ),
                         ),
                       ),
                       Text(
@@ -616,7 +663,9 @@ class _LearnMoreButton extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.orange,
                           minimumSize: const Size.fromHeight(50),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         onPressed: () => Navigator.pop(context),
                         child: const Text('GOT IT'),
@@ -641,7 +690,11 @@ class _LearnMoreButton extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 8),
-                Icon(Icons.call_made_rounded, color: AppColors.orange, size: 16),
+                Icon(
+                  Icons.call_made_rounded,
+                  color: AppColors.orange,
+                  size: 16,
+                ),
               ],
             ),
           ),
