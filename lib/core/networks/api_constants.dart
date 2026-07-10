@@ -56,4 +56,15 @@ class ApiConstants {
   static const String requests = '/api/vendor/requests';
   static String acceptRequest(String id) => '/api/vendor/requests/$id/accept';
   static String rejectRequest(String id) => '/api/vendor/requests/$id/reject';
+  static String startRequest(String id) => '/api/vendor/requests/$id/start';
+  static String updateRequestProgress(String id) => '/api/vendor/requests/$id/progress';
+  static String uploadRequestMedia(String id) => '/api/vendor/requests/$id/media';
+  static String updateRequestLocation(String id) => '/api/vendor/requests/$id/location';
+  static String completeRequest(String id) => '/api/vendor/requests/$id/complete';
+
+  // Settings & Security
+  static const String requestEmailChange = '/api/vendor/email/request-update';
+  static const String verifyEmailChange = '/api/vendor/email/verify-update';
+  static const String requestPhoneChange = '/api/vendor/phone/request-update';
+  static const String verifyPhoneChange = '/api/vendor/phone/verify-update';
 }
