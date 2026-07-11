@@ -1,8 +1,8 @@
 class ApiConstants {
-  static const String baseUrl = 'https://pawffy-backend.onrender.com';
+  static const String baseUrl = 'https://pawffy-backend-yyed.onrender.com';
 
   // Auth
-  static const String login = '/api/auth/vendor/login';
+  static const String session = '/api/auth/session';
   static const String register = '/api/auth/vendor/register';
   static const String me = '/api/auth/me';
   static const String logout = '/api/auth/logout';
@@ -67,4 +67,8 @@ class ApiConstants {
   static const String verifyEmailChange = '/api/vendor/email/verify-update';
   static const String requestPhoneChange = '/api/vendor/phone/request-update';
   static const String verifyPhoneChange = '/api/vendor/phone/verify-update';
+  static const String profileUpdate = '/api/vendor/profile';
+  static const String profileAvatar = '/api/vendor/profile/avatar';
+  static const String preferencesNotifications = '/api/vendor/preferences/notifications';
+  static const String supportTickets = '/api/support/tickets';
 }
