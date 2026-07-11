@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:device_preview/device_preview.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pawffy/features/auth/auth_gate_screen.dart';
+import 'package:pawffy/core/config/supabase_config.dart';
 
 final themeModeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(
   ThemeNotifier.new,
@@ -18,9 +20,17 @@ class ThemeNotifier extends Notifier<ThemeMode> {
   }
 }
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
+  if (!SupabaseConfig.useMockAuth) {
+    await Supabase.initialize(
+      url: SupabaseConfig.url,
+      anonKey: SupabaseConfig.anonKey,
+    );
+  }
+
   runApp(
     DevicePreview(
       enabled: false,
