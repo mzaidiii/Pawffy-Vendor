@@ -180,50 +180,89 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Stack(
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0E0E0),
-                                border: Border.all(color: AppColors.orange, width: 2),
-                                image: profileData.profile.profileImage != null && profileData.profile.profileImage!.isNotEmpty
-                                    ? DecorationImage(
-                                        image: ImagePickerHelper.getImageProvider(profileData.profile.profileImage!),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : (user?.profileImage != null && user!.profileImage!.isNotEmpty
-                                        ? DecorationImage(
-                                            image: ImagePickerHelper.getImageProvider(user.profileImage!),
-                                            fit: BoxFit.cover,
-                                          )
-                                        : null),
-                              ),
-                              child: (profileData.profile.profileImage == null || profileData.profile.profileImage!.isEmpty) &&
-                                      (user?.profileImage == null || user!.profileImage!.isEmpty)
-                                  ? const Icon(Icons.person_outline, color: Colors.grey, size: 36)
-                                  : null,
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                width: 24,
-                                height: 24,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.orange,
+                        GestureDetector(
+                          onTap: () async {
+                            final source = await ImagePickerHelper.showSourceBottomSheet(context);
+                            if (source != null) {
+                              final file = await ImagePickerHelper.pickImageWithPermission(
+                                context: context,
+                                source: source,
+                              );
+                              if (file != null) {
+                                try {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Uploading avatar...'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  await ref.read(profileControllerProvider.notifier).uploadAvatar(file.path);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Avatar updated successfully!'),
+                                        backgroundColor: AppColors.success,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Failed to upload avatar: $e'),
+                                        backgroundColor: AppColors.error,
+                                      ),
+                                    );
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
                                   shape: BoxShape.circle,
+                                  color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0E0E0),
+                                  border: Border.all(color: AppColors.orange, width: 2),
+                                  image: profileData.profile.profileImage != null && profileData.profile.profileImage!.isNotEmpty
+                                      ? DecorationImage(
+                                          image: ImagePickerHelper.getImageProvider(profileData.profile.profileImage!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : (user?.profileImage != null && user!.profileImage!.isNotEmpty
+                                          ? DecorationImage(
+                                              image: ImagePickerHelper.getImageProvider(user.profileImage!),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null),
                                 ),
-                                child: const Icon(
-                                  Icons.camera_alt_outlined,
-                                  color: Colors.white,
-                                  size: 12,
+                                child: (profileData.profile.profileImage == null || profileData.profile.profileImage!.isEmpty) &&
+                                        (user?.profileImage == null || user!.profileImage!.isEmpty)
+                                    ? const Icon(Icons.person_outline, color: Colors.grey, size: 36)
+                                    : null,
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.orange,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt_outlined,
+                                    color: Colors.white,
+                                    size: 12,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
