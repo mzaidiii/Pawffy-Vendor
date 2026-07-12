@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/request_model.dart';
 import '../data/services/requests_service.dart';
@@ -77,6 +79,76 @@ class RequestsNotifier extends AsyncNotifier<List<RequestModel>> {
   Future<bool> rejectRequest(String requestId) async {
     try {
       final success = await ref.read(requestsServiceProvider).rejectRequest(requestId);
+      if (success) {
+        ref.invalidateSelf();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> startRequest(String requestId) async {
+    try {
+      final success = await ref.read(requestsServiceProvider).startRequest(requestId);
+      if (success) {
+        ref.invalidateSelf();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> updateProgress(String requestId, Map<String, dynamic> progressData) async {
+    try {
+      final success = await ref.read(requestsServiceProvider).updateRequestProgress(requestId, progressData);
+      if (success) {
+        // We don't necessarily want to reload list and disrupt user interaction for inline milestone updates,
+        // but we return success so UI can update local state.
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> uploadMedia(String requestId, File file) async {
+    try {
+      final success = await ref.read(requestsServiceProvider).uploadRequestMedia(requestId, file);
+      return success;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> updateLocation(
+    String requestId, {
+    required double latitude,
+    required double longitude,
+    required String address,
+  }) async {
+    try {
+      final timestamp = DateTime.now().toUtc().toIso8601String();
+      final success = await ref.read(requestsServiceProvider).updateRequestLocation(
+        requestId,
+        latitude: latitude,
+        longitude: longitude,
+        address: address,
+        timestamp: timestamp,
+      );
+      return success;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> completeRequest(String requestId, FormData formData) async {
+    try {
+      final success = await ref.read(requestsServiceProvider).completeRequest(requestId, formData);
       if (success) {
         ref.invalidateSelf();
         return true;
