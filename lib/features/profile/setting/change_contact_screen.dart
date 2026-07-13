@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:pawffy/main.dart';
 import 'package:pawffy/features/auth/providers/auth_provider.dart';
-import 'package:pawffy/features/auth/providers/current{_user_provider.dart';
+import 'package:pawffy/features/auth/providers/current_user_provider.dart';
 import 'package:pawffy/core/Storage/storage_service.dart';
 
 class ChangeContactScreen extends ConsumerStatefulWidget {
