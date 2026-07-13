@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:pawffy/main.dart';
-import 'package:pawffy/features/auth/providers/current{_user_provider.dart';
+import 'package:pawffy/features/auth/providers/current_user_provider.dart';
 import 'package:pawffy/features/auth/providers/auth_provider.dart';
 import 'package:pawffy/core/Storage/storage_service.dart';
 import 'package:pawffy/core/utils/image_picker_helper.dart';
@@ -325,6 +325,7 @@ class SettingsScreen extends ConsumerWidget {
                     onTap: () => _showStaticContentScreen(
                       context,
                       'Terms & Conditions',
+                      termsContentProvider,
                       _termsContent,
                     ),
                   ),
@@ -337,6 +338,7 @@ class SettingsScreen extends ConsumerWidget {
                     onTap: () => _showStaticContentScreen(
                       context,
                       'Privacy Policy',
+                      privacyContentProvider,
                       _privacyContent,
                     ),
                   ),
@@ -775,20 +777,62 @@ class SettingsScreen extends ConsumerWidget {
   void _showStaticContentScreen(
     BuildContext context,
     String title,
-    String content,
+    FutureProvider<String> provider,
+    String fallbackContent,
   ) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => Scaffold(
-          appBar: AppBar(title: Text(title)),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Text(
-              content,
-              style: const TextStyle(fontSize: 14, height: 1.4),
-            ),
-          ),
+        builder: (context) => Consumer(
+          builder: (context, ref, child) {
+            final contentAsync = ref.watch(provider);
+            return Scaffold(
+              appBar: AppBar(title: Text(title)),
+              body: SafeArea(
+                child: contentAsync.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(color: AppColors.orange),
+                  ),
+                  error: (err, stack) => SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Offline Mode: Displaying cached document.',
+                                style: GoogleFonts.barlow(
+                                  fontSize: 12,
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          fallbackContent,
+                          style: const TextStyle(fontSize: 14, height: 1.4),
+                        ),
+                      ],
+                    ),
+                  ),
+                  data: (content) => SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Text(
+                      content.isNotEmpty ? content : fallbackContent,
+                      style: const TextStyle(fontSize: 14, height: 1.4),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
