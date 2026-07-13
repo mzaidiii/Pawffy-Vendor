@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:pawffy/main.dart';
+import 'package:pawffy/core/config/supabase_config.dart';
 import 'package:pawffy/features/auth/providers/auth_controller.dart';
 import 'package:pawffy/features/onboarding/screens/onboarding_flow_screen.dart';
 
@@ -15,33 +18,33 @@ class CreateAccountScreen extends ConsumerStatefulWidget {
 class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _otpController = TextEditingController();
 
   final _nameFocus = FocusNode();
   final _emailFocus = FocusNode();
-  final _passwordFocus = FocusNode();
-  final _confirmPasswordFocus = FocusNode();
+  final _phoneFocus = FocusNode();
+  final _otpFocus = FocusNode();
 
   bool _acceptTerms = false;
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
+  bool _otpSent = false;
+  bool _isLoading = false;
 
   String? _nameError;
   String? _emailError;
-  String? _passwordError;
-  String? _confirmPasswordError;
+  String? _phoneError;
+  String? _otpError;
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
+    _phoneController.dispose();
+    _otpController.dispose();
     _nameFocus.dispose();
     _emailFocus.dispose();
-    _passwordFocus.dispose();
-    _confirmPasswordFocus.dispose();
+    _phoneFocus.dispose();
+    _otpFocus.dispose();
     super.dispose();
   }
 
@@ -57,55 +60,39 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
     return null;
   }
 
-  String? _validatePassword(String value) {
-    if (value.isEmpty) return 'Password is required';
-    if (value.length < 8) return 'Password must be at least 8 characters';
-    final hasUppercase = value.contains(RegExp(r'[A-Z]'));
-    final hasLowercase = value.contains(RegExp(r'[a-z]'));
-    final hasDigits = value.contains(RegExp(r'[0-9]'));
-    if (!hasUppercase || !hasLowercase || !hasDigits) {
-      return 'Password must contain uppercase, lowercase, and a digit';
-    }
+  String? _validatePhone(String value) {
+    if (value.trim().isEmpty) return 'Phone number is required';
+    if (!value.startsWith('+'))
+      return 'Must start with + and country code (e.g. +1)';
+    if (value.length < 10) return 'Enter a valid phone number';
     return null;
   }
 
-  String? _validateConfirmPassword(String value) {
-    if (value.isEmpty) return 'Confirm password is required';
-    if (value != _passwordController.text) {
-      return 'Passwords do not match';
-    }
+  String? _validateOtp(String value) {
+    if (value.trim().isEmpty) return 'OTP code is required';
+    if (value.trim().length != 6) return 'OTP must be 6 digits';
     return null;
   }
 
-  bool _validateAll() {
+  bool _validateInitialInputs() {
     final nameErr = _validateName(_nameController.text);
     final emailErr = _validateEmail(_emailController.text.trim());
-    final passErr = _validatePassword(_passwordController.text);
-    final confirmErr = _validateConfirmPassword(
-      _confirmPasswordController.text,
-    );
+    final phoneErr = _validatePhone(_phoneController.text);
 
     setState(() {
       _nameError = nameErr;
       _emailError = emailErr;
-      _passwordError = passErr;
-      _confirmPasswordError = confirmErr;
+      _phoneError = phoneErr;
     });
 
-    if (nameErr != null ||
-        emailErr != null ||
-        passErr != null ||
-        confirmErr != null) {
+    if (nameErr != null || emailErr != null || phoneErr != null) {
       return false;
     }
 
     if (!_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'You must accept the terms & conditions to register.',
-            style: GoogleFonts.barlow(),
-          ),
+        const SnackBar(
+          content: Text('You must accept the terms and conditions'),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -115,49 +102,144 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
     return true;
   }
 
-  Future<void> _handleRegister() async {
-    if (!_validateAll()) return;
+  Future<void> _handleSendOtp() async {
+    if (!_validateInitialInputs()) return;
 
-    final name = _nameController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
+    setState(() => _isLoading = true);
+    final phone = _phoneController.text.trim();
 
-    final success = await ref
-        .read(authControllerProvider.notifier)
-        .register(
-          name: name,
-          email: email,
-          password: password,
-          acceptTerms: _acceptTerms,
+    try {
+      if (SupabaseConfig.useMockAuth) {
+        await Future.delayed(const Duration(seconds: 1));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Mock OTP Code "123456" sent successfully!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          setState(() {
+            _otpSent = true;
+            _isLoading = false;
+          });
+          _otpFocus.requestFocus();
+        }
+      } else {
+        if (SupabaseConfig.anonKey == 'YOUR_SUPABASE_ANON_KEY' || SupabaseConfig.anonKey.isEmpty) {
+          throw Exception('Please configure your Supabase Anon Key in supabase_config.dart');
+        }
+        await Supabase.instance.client.auth.signInWithOtp(phone: phone);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Verification code sent to your phone!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          setState(() {
+            _otpSent = true;
+            _isLoading = false;
+          });
+          _otpFocus.requestFocus();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send OTP: $e'),
+            backgroundColor: AppColors.error,
+          ),
         );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
-    if (!mounted) return;
+  Future<void> _handleVerifyAndRegister() async {
+    final otp = _otpController.text.trim();
+    final error = _validateOtp(otp);
+    setState(() => _otpError = error);
+    if (error != null) return;
 
-    if (success) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
-        (route) => false,
-      );
-    } else {
-      final error = ref.read(authControllerProvider);
-      final errorMsg = error.hasError
-          ? error.error.toString().replaceFirst('Exception: ', '')
-          : 'Registration failed';
+    setState(() => _isLoading = true);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMsg, style: GoogleFonts.barlow()),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+    try {
+      String? accessToken;
+
+      if (SupabaseConfig.useMockAuth) {
+        await Future.delayed(const Duration(seconds: 1));
+        if (otp == '123456') {
+          accessToken = 'mock_access_token_supabase_session_register_2026';
+        } else {
+          throw Exception('Invalid OTP code. Use "123456"');
+        }
+      } else {
+        if (SupabaseConfig.anonKey == 'YOUR_SUPABASE_ANON_KEY' || SupabaseConfig.anonKey.isEmpty) {
+          throw Exception('Please configure your Supabase Anon Key in supabase_config.dart');
+        }
+        final phone = _phoneController.text.trim();
+        final response = await Supabase.instance.client.auth.verifyOTP(
+          type: OtpType.sms,
+          phone: phone,
+          token: otp,
+        );
+        accessToken = response.session?.accessToken;
+        if (accessToken == null) {
+          throw Exception(
+            'Verification succeeded but no session token was found.',
+          );
+        }
+      }
+
+      final name = _nameController.text.trim();
+      final email = _emailController.text.trim();
+
+      final success = await ref
+          .read(authControllerProvider.notifier)
+          .register(
+            name: name,
+            email: email,
+            accessToken: accessToken,
+            acceptTerms: _acceptTerms,
+          );
+
+      if (!mounted) return;
+
+      if (success) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
+        );
+      } else {
+        final authState = ref.read(authControllerProvider);
+        final errorMsg = authState.hasError
+            ? authState.error.toString().replaceFirst('Exception: ', '')
+            : 'Registration failed';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMsg), backgroundColor: AppColors.error),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Verification failed: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
-    final authState = ref.watch(authControllerProvider);
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -169,71 +251,65 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.maybePop(context),
-                      child: const Icon(
-                        Icons.arrow_back_ios,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: size.height * 0.035),
+                SizedBox(height: size.height * 0.05),
+
+                // Top Header Text
                 SizedBox(
                   width: double.infinity,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
                           'CREATE',
                           style: GoogleFonts.archivoBlack(
-                            fontSize: 45,
+                            fontSize: 48,
                             fontWeight: FontWeight.w400,
                             height: 1.0,
                             color: Colors.white,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 12),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'ACCOUNT!',
+                          'YOUR PARTNER ACCOUNT',
                           style: GoogleFonts.archivoBlack(
-                            fontSize: 45,
+                            fontSize: 32,
                             fontWeight: FontWeight.w400,
                             height: 1.0,
-                            color: const Color(0xFFE85D04),
+                            color: Colors.white,
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        "Let's get started with your details",
-                        style: GoogleFonts.barlow(
-                          color: Colors.grey,
-                          fontSize: 14,
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                SizedBox(height: size.height * 0.045),
+                SizedBox(height: size.height * 0.05),
 
+                // Full Name field
                 _buildTextField(
                   controller: _nameController,
                   focusNode: _nameFocus,
-                  hint: 'Name',
+                  hint: 'Full Name',
                   icon: Icons.person_outline,
                   errorText: _nameError,
+                  isDark: isDark,
+                  readOnly: _otpSent && !_isLoading,
                   onChanged: (_) {
                     if (_nameError != null) {
                       setState(
@@ -245,6 +321,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                 ),
                 const SizedBox(height: 14),
 
+                // Email field
                 _buildTextField(
                   controller: _emailController,
                   focusNode: _emailFocus,
@@ -252,96 +329,134 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                   icon: Icons.mail_outline,
                   errorText: _emailError,
                   keyboardType: TextInputType.emailAddress,
+                  isDark: isDark,
+                  readOnly: _otpSent && !_isLoading,
                   onChanged: (_) {
                     if (_emailError != null) {
                       setState(
-                        () => _emailError = _validateEmail(
-                          _emailController.text.trim(),
-                        ),
+                        () =>
+                            _emailError = _validateEmail(_emailController.text),
                       );
                     }
                   },
-                  onSubmitted: (_) => _passwordFocus.requestFocus(),
+                  onSubmitted: (_) => _phoneFocus.requestFocus(),
                 ),
                 const SizedBox(height: 14),
 
+                // Phone field
                 _buildTextField(
-                  controller: _passwordController,
-                  focusNode: _passwordFocus,
-                  hint: 'Password',
-                  icon: Icons.lock_outline,
-                  errorText: _passwordError,
-                  isPassword: true,
-                  obscureText: _obscurePassword,
-                  onObscureToggle: () =>
-                      setState(() => _obscurePassword = !_obscurePassword),
+                  controller: _phoneController,
+                  focusNode: _phoneFocus,
+                  hint: 'Phone Number (e.g. +15551234567)',
+                  icon: Icons.phone,
+                  errorText: _phoneError,
+                  keyboardType: TextInputType.phone,
+                  isDark: isDark,
+                  readOnly: _otpSent && !_isLoading,
                   onChanged: (_) {
-                    if (_passwordError != null) {
+                    if (_phoneError != null) {
                       setState(
-                        () => _passwordError = _validatePassword(
-                          _passwordController.text,
-                        ),
+                        () =>
+                            _phoneError = _validatePhone(_phoneController.text),
                       );
                     }
                   },
-                  onSubmitted: (_) => _confirmPasswordFocus.requestFocus(),
+                  onSubmitted: (_) {
+                    if (!_otpSent) {
+                      _handleSendOtp();
+                    } else {
+                      _otpFocus.requestFocus();
+                    }
+                  },
                 ),
                 const SizedBox(height: 14),
 
-                _buildTextField(
-                  controller: _confirmPasswordController,
-                  focusNode: _confirmPasswordFocus,
-                  hint: 'Confirm Password',
-                  icon: Icons.lock_outline,
-                  errorText: _confirmPasswordError,
-                  isPassword: true,
-                  obscureText: _obscureConfirmPassword,
-                  onObscureToggle: () => setState(
-                    () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                // OTP verification code field (revealed once OTP is sent)
+                if (_otpSent) ...[
+                  _buildTextField(
+                    controller: _otpController,
+                    focusNode: _otpFocus,
+                    hint: '6-digit Verification Code',
+                    icon: Icons.lock_outline,
+                    errorText: _otpError,
+                    keyboardType: TextInputType.number,
+                    isDark: isDark,
+                    onChanged: (_) {
+                      if (_otpError != null) {
+                        setState(
+                          () => _otpError = _validateOtp(_otpController.text),
+                        );
+                      }
+                    },
+                    onSubmitted: (_) => _handleVerifyAndRegister(),
                   ),
-                  onChanged: (_) {
-                    if (_confirmPasswordError != null) {
-                      setState(
-                        () => _confirmPasswordError = _validateConfirmPassword(
-                          _confirmPasswordController.text,
-                        ),
-                      );
-                    }
-                  },
-                  onSubmitted: (_) => _handleRegister(),
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 14),
+                ],
 
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _acceptTerms,
-                      onChanged: (val) {
-                        setState(() {
-                          _acceptTerms = val ?? false;
-                        });
-                      },
-                      activeColor: const Color(0xFFE85D04),
-                      side: const BorderSide(
-                        color: Color(0xFFE85D04),
-                        width: 1.5,
+                if (_otpSent)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: _isLoading
+                          ? null
+                          : () => setState(() => _otpSent = false),
+                      child: Text(
+                        'Change details?',
+                        style: GoogleFonts.barlow(
+                          color: const Color(0xFFE85D04),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
+                  ),
+
+                const SizedBox(height: 10),
+
+                // Terms Acceptance Checkbox
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: Checkbox(
+                        value: _acceptTerms,
+                        onChanged: (_otpSent && !_isLoading)
+                            ? null
+                            : (val) => setState(() => _acceptTerms = val!),
+                        activeColor: const Color(0xFFE85D04),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        side: const BorderSide(
+                          color: Color(0xFFE85D04),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: RichText(
                         text: TextSpan(
                           text: 'I agree to the ',
                           style: GoogleFonts.barlow(
-                            color: Colors.white70,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
                           ),
                           children: [
                             TextSpan(
-                              text: 'Terms & Conditions',
+                              text: 'Terms of Service',
                               style: GoogleFonts.barlow(
                                 color: const Color(0xFFE85D04),
-                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const TextSpan(text: ' & '),
+                            TextSpan(
+                              text: 'Privacy Policy',
+                              style: GoogleFonts.barlow(
+                                color: const Color(0xFFE85D04),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -354,57 +469,48 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
                 const SizedBox(height: 24),
 
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: ElevatedButton(
-                    key: ValueKey(authState.isLoading),
-                    onPressed: authState.isLoading ? null : _handleRegister,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE85D04),
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: const Color(
-                        0xFFE85D04,
-                      ).withOpacity(0.6),
-                      minimumSize: const Size(double.infinity, 52),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
+                // Submit Button
+                ElevatedButton(
+                  onPressed: _isLoading
+                      ? null
+                      : (_otpSent ? _handleVerifyAndRegister : _handleSendOtp),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE85D04),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: const Color(
+                      0xFFE85D04,
+                    ).withOpacity(0.6),
+                    minimumSize: const Size(double.infinity, 52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
-                    child: authState.isLoading
-                        ? const SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'SIGN UP',
-                                style: GoogleFonts.barlow(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.arrow_outward, size: 18),
-                            ],
-                          ),
                   ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _otpSent ? 'VERIFY & REGISTER' : 'SEND OTP',
+                              style: GoogleFonts.barlow(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.arrow_outward, size: 18),
+                          ],
+                        ),
                 ),
-
-                const SizedBox(height: 20),
-
-                Text(
-                  'Or Sign up With',
-                  style: GoogleFonts.barlow(color: Colors.grey, fontSize: 13),
-                ),
-
-                const SizedBox(height: 18),
+                const SizedBox(height: 24),
 
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
@@ -420,7 +526,7 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
                         ),
                         children: [
                           TextSpan(
-                            text: 'Login',
+                            text: 'Log In',
                             style: GoogleFonts.barlow(
                               color: const Color(0xFFE85D04),
                               fontSize: 13,
@@ -444,85 +550,56 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
+    required bool isDark,
     FocusNode? focusNode,
     String? errorText,
-    bool isPassword = false,
-    bool obscureText = false,
-    VoidCallback? onObscureToggle,
+    bool readOnly = false,
     TextInputType? keyboardType,
     ValueChanged<String>? onChanged,
     ValueChanged<String>? onSubmitted,
   }) {
-    const fillColor = Color(0xFF232323);
-    const textColor = Colors.white;
-    const hintColor = Colors.grey;
+    final fillColor = isDark
+        ? const Color(0xFF232323)
+        : const Color(0xFFF2F2F2);
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final hintColor = Colors.grey;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: focusNode != null && focusNode.hasFocus
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFFE85D04).withOpacity(0.25),
-                      blurRadius: 12,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : [],
-          ),
-          child: TextField(
-            controller: controller,
-            focusNode: focusNode,
-            obscureText: isPassword ? obscureText : false,
-            keyboardType: keyboardType,
-            textInputAction: isPassword
-                ? TextInputAction.done
-                : TextInputAction.next,
-            style: GoogleFonts.barlow(color: textColor),
-            onChanged: onChanged,
-            onSubmitted: onSubmitted,
-            onTap: () => setState(() {}),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: GoogleFonts.barlow(
-                color: hintColor,
-                fontWeight: FontWeight.w400,
-              ),
-              prefixIcon: Icon(icon, color: hintColor, size: 20),
-              suffixIcon: isPassword
-                  ? IconButton(
-                      icon: Icon(
-                        obscureText
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        color: hintColor,
-                        size: 20,
-                      ),
-                      onPressed: onObscureToggle,
-                    )
-                  : null,
-              filled: true,
-              fillColor: fillColor,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: errorText != null
-                    ? const BorderSide(color: Colors.redAccent, width: 1.2)
-                    : BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: errorText != null
-                    ? const BorderSide(color: Colors.redAccent, width: 1.5)
-                    : const BorderSide(color: Color(0xFFE85D04), width: 1.5),
-              ),
+        TextField(
+          controller: controller,
+          focusNode: focusNode,
+          readOnly: readOnly,
+          keyboardType: keyboardType,
+          textInputAction: TextInputAction.next,
+          style: GoogleFonts.barlow(color: textColor),
+          onChanged: onChanged,
+          onSubmitted: onSubmitted,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.barlow(
+              color: hintColor,
+              fontWeight: FontWeight.w400,
+            ),
+            prefixIcon: Icon(icon, color: hintColor, size: 20),
+            filled: true,
+            fillColor: fillColor,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: errorText != null
+                  ? const BorderSide(color: Colors.redAccent, width: 1.2)
+                  : BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: errorText != null
+                  ? const BorderSide(color: Colors.redAccent, width: 1.5)
+                  : const BorderSide(color: Color(0xFFE85D04), width: 1.5),
             ),
           ),
         ),
