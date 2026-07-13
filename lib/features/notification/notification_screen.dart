@@ -98,93 +98,95 @@ class NotificationScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: notifAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, color: Colors.grey, size: 48),
-              const SizedBox(height: 12),
-              Text(
-                'Could not load notifications',
-                style: GoogleFonts.barlow(color: Colors.grey, fontSize: 14),
-              ),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () =>
-                    ref.read(notificationControllerProvider.notifier).refresh(),
-                child: Text(
-                  'Try again',
-                  style: GoogleFonts.barlow(
-                    color: const Color(0xFFE85D04),
-                    fontWeight: FontWeight.w600,
-                  ),
+      body: SafeArea(
+        child: notifAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.grey, size: 48),
+                const SizedBox(height: 12),
+                Text(
+                  'Could not load notifications',
+                  style: GoogleFonts.barlow(color: Colors.grey, fontSize: 14),
                 ),
-              ),
-            ],
-          ),
-        ),
-        data: (notifications) {
-          if (notifications.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 64,
-                    color: const Color(0xFFE85D04).withOpacity(0.4),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'You\'re all caught up!',
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () =>
+                      ref.read(notificationControllerProvider.notifier).refresh(),
+                  child: Text(
+                    'Try again',
                     style: GoogleFonts.barlow(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: const Color(0xFFE85D04),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'No new notifications right now.',
-                    style: GoogleFonts.barlow(fontSize: 13, color: Colors.grey),
-                  ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          data: (notifications) {
+            if (notifications.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 64,
+                      color: const Color(0xFFE85D04).withOpacity(0.4),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'You\'re all caught up!',
+                      style: GoogleFonts.barlow(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'No new notifications right now.',
+                      style: GoogleFonts.barlow(fontSize: 13, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return RefreshIndicator(
+              color: const Color(0xFFE85D04),
+              onRefresh: () =>
+                  ref.read(notificationControllerProvider.notifier).refresh(),
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                itemCount: notifications.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final notif = notifications[index];
+                  return _NotificationTile(
+                    notification: notif,
+                    iconData: _iconForType(notif.type),
+                    iconColor: _colorForType(notif.type),
+                    timeAgo: _timeAgo(notif.createdAt),
+                    onTap: () {
+                      if (!notif.isRead) {
+                        ref
+                            .read(notificationControllerProvider.notifier)
+                            .markAsRead(notif.id);
+                      }
+                    },
+                    onDelete: () => ref
+                        .read(notificationControllerProvider.notifier)
+                        .deleteNotification(notif.id),
+                  );
+                },
               ),
             );
-          }
-
-          return RefreshIndicator(
-            color: const Color(0xFFE85D04),
-            onRefresh: () =>
-                ref.read(notificationControllerProvider.notifier).refresh(),
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              itemCount: notifications.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final notif = notifications[index];
-                return _NotificationTile(
-                  notification: notif,
-                  iconData: _iconForType(notif.type),
-                  iconColor: _colorForType(notif.type),
-                  timeAgo: _timeAgo(notif.createdAt),
-                  onTap: () {
-                    if (!notif.isRead) {
-                      ref
-                          .read(notificationControllerProvider.notifier)
-                          .markAsRead(notif.id);
-                    }
-                  },
-                  onDelete: () => ref
-                      .read(notificationControllerProvider.notifier)
-                      .deleteNotification(notif.id),
-                );
-              },
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }
