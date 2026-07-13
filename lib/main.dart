@@ -24,7 +24,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  if (!SupabaseConfig.useMockAuth) {
+  if (!SupabaseConfig.useMockAuth &&
+      SupabaseConfig.anonKey != 'YOUR_SUPABASE_ANON_KEY' &&
+      SupabaseConfig.anonKey.isNotEmpty) {
     await Supabase.initialize(
       url: SupabaseConfig.url,
       anonKey: SupabaseConfig.anonKey,
