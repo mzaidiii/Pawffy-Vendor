@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:pawffy/main.dart';
-import 'package:pawffy/features/auth/providers/current{_user_provider.dart';
+import 'package:pawffy/features/auth/providers/current_user_provider.dart';
 import 'package:pawffy/features/profile/providers/profile_controller.dart';
 
 class PersonalInformationScreen extends ConsumerStatefulWidget {
