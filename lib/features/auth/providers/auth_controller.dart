@@ -12,15 +12,14 @@ class AuthController extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}
 
-  Future<bool> login({required String email, required String password}) async {
+  Future<bool> login({required String accessToken}) async {
     state = const AsyncLoading();
 
     try {
       final authService = ref.read(authServiceProvider);
 
       final response = await authService.login(
-        email: email,
-        password: password,
+        accessToken: accessToken,
       );
 
       await StorageService.saveToken(response.token);
@@ -38,7 +37,7 @@ class AuthController extends AsyncNotifier<void> {
   Future<bool> register({
     required String name,
     required String email,
-    required String password,
+    required String accessToken,
     required bool acceptTerms,
   }) async {
     state = const AsyncLoading();
@@ -49,7 +48,7 @@ class AuthController extends AsyncNotifier<void> {
       final response = await authService.register(
         name: name,
         email: email,
-        password: password,
+        accessToken: accessToken,
         acceptTerms: acceptTerms,
       );
 
