@@ -71,4 +71,8 @@ class ApiConstants {
   static const String profileAvatar = '/api/vendor/profile/avatar';
   static const String preferencesNotifications = '/api/vendor/preferences/notifications';
   static const String supportTickets = '/api/support/tickets';
+  static const String wallet = '/api/wallet';
+  static const String withdraw = '/api/wallet/withdraw';
+  static const String terms = '/api/static/terms';
+  static const String privacy = '/api/static/privacy';
 }
