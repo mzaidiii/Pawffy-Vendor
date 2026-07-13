@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pawffy/features/home/home_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:pawffy/main.dart';
+import 'package:pawffy/core/config/supabase_config.dart';
 import 'package:pawffy/features/auth/providers/auth_controller.dart';
 import 'package:pawffy/features/auth/create_account_screen.dart';
 import 'package:pawffy/features/onboarding/screens/onboarding_flow_screen.dart';
 import 'package:pawffy/features/onboarding/providers/onboarding_provider.dart';
-
-
+import 'package:pawffy/features/home/home_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -17,190 +18,212 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _emailFocus = FocusNode();
-  final _passwordFocus = FocusNode();
+  final _phoneController = TextEditingController();
+  final _otpController = TextEditingController();
+  final _phoneFocus = FocusNode();
+  final _otpFocus = FocusNode();
 
-  bool _rememberMe = true;
-  bool _obscurePassword = true;
+  bool _otpSent = false;
+  bool _isLoading = false;
 
-  String? _emailError;
-  String? _passwordError;
+  String? _phoneError;
+  String? _otpError;
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    _emailFocus.dispose();
-    _passwordFocus.dispose();
+    _phoneController.dispose();
+    _otpController.dispose();
+    _phoneFocus.dispose();
+    _otpFocus.dispose();
     super.dispose();
   }
 
-  String? _validateEmail(String value) {
-    if (value.isEmpty) return 'Email is required';
-    final emailRegex = RegExp(r'^[\w\.\+\-]+@([\w\-]+\.)+[\w\-]{2,}$');
-    if (!emailRegex.hasMatch(value)) return 'Enter a valid email address';
+  String? _validatePhone(String value) {
+    if (value.trim().isEmpty) return 'Phone number is required';
+    if (!value.startsWith('+'))
+      return 'Must start with + and country code (e.g. +1)';
+    if (value.length < 10) return 'Enter a valid phone number';
     return null;
   }
 
-  String? _validatePassword(String value) {
-    if (value.isEmpty) return 'Password is required';
-    if (value.length < 8) return 'Password must be at least 8 characters';
+  String? _validateOtp(String value) {
+    if (value.trim().isEmpty) return 'OTP code is required';
+    if (value.trim().length != 6) return 'OTP must be 6 digits';
     return null;
   }
 
-  bool _validateAll() {
-    final emailErr = _validateEmail(_emailController.text.trim());
-    final passErr = _validatePassword(_passwordController.text);
-    setState(() {
-      _emailError = emailErr;
-      _passwordError = passErr;
-    });
-    return emailErr == null && passErr == null;
-  }
+  Future<void> _handleSendOtp() async {
+    final phone = _phoneController.text.trim();
+    final error = _validatePhone(phone);
+    setState(() => _phoneError = error);
+    if (error != null) return;
 
-  Future<void> _handleForgotPassword() async {
-    final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your email address first'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
+    setState(() => _isLoading = true);
 
-    final emailErr = _validateEmail(email);
-    if (emailErr != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(emailErr), backgroundColor: Colors.redAccent),
-      );
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
+    try {
+      if (SupabaseConfig.useMockAuth) {
+        // Simulated send
+        await Future.delayed(const Duration(seconds: 1));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Mock OTP Code "123456" sent successfully!'),
+              backgroundColor: AppColors.success,
             ),
-            SizedBox(width: 16),
-            Text('Sending password reset link...'),
-          ],
-        ),
-        duration: Duration(days: 1),
-      ),
-    );
-
-    final message = await ref
-        .read(authControllerProvider.notifier)
-        .forgotPassword(email: email);
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).clearSnackBars();
-
-    if (message != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.green),
-      );
-    } else {
-      final error = ref.read(authControllerProvider);
-      final errorMsg = error.hasError
-          ? error.error.toString().replaceFirst('Exception: ', '')
-          : 'Forgot password failed';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMsg), backgroundColor: Colors.redAccent),
-      );
+          );
+          setState(() {
+            _otpSent = true;
+            _isLoading = false;
+          });
+          _otpFocus.requestFocus();
+        }
+      } else {
+        if (SupabaseConfig.anonKey == 'YOUR_SUPABASE_ANON_KEY' || SupabaseConfig.anonKey.isEmpty) {
+          throw Exception('Please configure your Supabase Anon Key in supabase_config.dart');
+        }
+        await Supabase.instance.client.auth.signInWithOtp(
+          phone: phone,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Verification code sent to your phone!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          setState(() {
+            _otpSent = true;
+            _isLoading = false;
+          });
+          _otpFocus.requestFocus();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send OTP: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        setState(() => _isLoading = false);
+      }
     }
   }
 
-  Future<void> _handleLogin() async {
-    if (!_validateAll()) return;
+  Future<void> _handleVerifyAndLogin() async {
+    final otp = _otpController.text.trim();
+    final error = _validateOtp(otp);
+    setState(() => _otpError = error);
+    if (error != null) return;
 
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
+    setState(() => _isLoading = true);
 
-    final success = await ref
-        .read(authControllerProvider.notifier)
-        .login(email: email, password: password);
+    try {
+      String? accessToken;
 
-    if (!mounted) return;
+      if (SupabaseConfig.useMockAuth) {
+        await Future.delayed(const Duration(seconds: 1));
+        if (otp == '123456') {
+          accessToken = 'mock_access_token_supabase_session_login_2026';
+        } else {
+          throw Exception('Invalid OTP code. Use "123456"');
+        }
+      } else {
+        if (SupabaseConfig.anonKey == 'YOUR_SUPABASE_ANON_KEY' || SupabaseConfig.anonKey.isEmpty) {
+          throw Exception('Please configure your Supabase Anon Key in supabase_config.dart');
+        }
+        final phone = _phoneController.text.trim();
+        final response = await Supabase.instance.client.auth.verifyOTP(
+          type: OtpType.sms,
+          phone: phone,
+          token: otp,
+        );
+        accessToken = response.session?.accessToken;
+        if (accessToken == null) {
+          throw Exception(
+            'Verification succeeded but no session token was found.',
+          );
+        }
+      }
 
-    if (success) {
-      print('DEBUG: [LoginScreen._handleLogin] Login success. Fetching onboarding status');
-      final onboardingService = ref.read(onboardingServiceProvider);
-      try {
-        final res = await onboardingService.getOnboardingState();
-        final ok = res['success'] as bool? ?? false;
-        
-        if (ok && res['data'] != null) {
-          final data = res['data'] as Map<String, dynamic>;
-          final business = data['business'] as Map<String, dynamic>?;
-          final status = business?['verificationStatus']?.toString() ?? 'draft';
-          print('DEBUG: [LoginScreen._handleLogin] Verification status is: $status');
+      final success = await ref
+          .read(authControllerProvider.notifier)
+          .login(accessToken: accessToken);
 
-          if (!mounted) return;
+      if (!mounted) return;
 
-          if (status == 'pending' || status == 'verified') {
-            print('DEBUG: [LoginScreen._handleLogin] Routing to HomeScreen');
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const HomeScreen()),
-            );
+      if (success) {
+        final onboardingService = ref.read(onboardingServiceProvider);
+        try {
+          final res = await onboardingService.getOnboardingState();
+          final ok = res['success'] as bool? ?? false;
+
+          if (ok && res['data'] != null) {
+            final data = res['data'] as Map<String, dynamic>;
+            final business = data['business'] as Map<String, dynamic>?;
+            final status =
+                business?['verificationStatus']?.toString() ?? 'draft';
+
+            if (!mounted) return;
+
+            if (status == 'pending' || status == 'verified') {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const HomeScreen()),
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
+              );
+            }
           } else {
-            print('DEBUG: [LoginScreen._handleLogin] Routing to OnboardingFlowScreen');
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
             );
           }
-        } else {
-          print('DEBUG: [LoginScreen._handleLogin] Onboarding status load failed. Routing to OnboardingFlowScreen');
+        } catch (e) {
+          if (!mounted) return;
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
           );
         }
-      } catch (e, stack) {
-        print('DEBUG: [LoginScreen._handleLogin] Error loading onboarding: $e\n$stack. Routing to OnboardingFlowScreen');
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
+      } else {
+        final authState = ref.read(authControllerProvider);
+        final errorMsg = authState.hasError
+            ? authState.error.toString().replaceFirst('Exception: ', '')
+            : 'Login failed';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMsg), backgroundColor: AppColors.error),
         );
       }
-    } else {
-      final error = ref.read(authControllerProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            error.hasError
-                ? error.error.toString().replaceFirst('Exception: ', '')
-                : 'Login failed',
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Verification failed: $e'),
+            backgroundColor: AppColors.error,
           ),
-        ),
-      );
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
-    final isDark = true;
-    final authState = ref.watch(authControllerProvider);
 
     return Scaffold(
       backgroundColor: Colors.black,
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -251,7 +274,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 18),
+                      const SizedBox(height: 18),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
@@ -269,82 +292,67 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
 
-                SizedBox(height: size.height * 0.10),
+                SizedBox(height: size.height * 0.08),
 
+                // Phone number field
                 _buildTextField(
-                  controller: _emailController,
-                  focusNode: _emailFocus,
-                  hint: 'Email Address',
-                  icon: Icons.mail_outline,
-                  errorText: _emailError,
-                  keyboardType: TextInputType.emailAddress,
+                  controller: _phoneController,
+                  focusNode: _phoneFocus,
+                  hint: 'Phone Number (e.g. +15551234567)',
+                  icon: Icons.phone,
+                  errorText: _phoneError,
+                  keyboardType: TextInputType.phone,
                   isDark: isDark,
+                  readOnly: _otpSent && !_isLoading,
                   onChanged: (_) {
-                    if (_emailError != null) {
+                    if (_phoneError != null) {
                       setState(
-                        () => _emailError = _validateEmail(
-                          _emailController.text.trim(),
-                        ),
+                        () =>
+                            _phoneError = _validatePhone(_phoneController.text),
                       );
                     }
                   },
-                  onSubmitted: (_) => _passwordFocus.requestFocus(),
-                ),
-                const SizedBox(height: 14),
-
-                _buildTextField(
-                  controller: _passwordController,
-                  focusNode: _passwordFocus,
-                  hint: 'Password',
-                  icon: Icons.lock_outline,
-                  errorText: _passwordError,
-                  isPassword: true,
-                  isDark: isDark,
-                  onChanged: (_) {
-                    if (_passwordError != null) {
-                      setState(
-                        () => _passwordError = _validatePassword(
-                          _passwordController.text,
-                        ),
-                      );
+                  onSubmitted: (_) {
+                    if (!_otpSent) {
+                      _handleSendOtp();
+                    } else {
+                      _otpFocus.requestFocus();
                     }
                   },
-                  onSubmitted: (_) => _handleLogin(),
                 ),
                 const SizedBox(height: 14),
 
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: Checkbox(
-                        value: _rememberMe,
-                        onChanged: (val) => setState(() => _rememberMe = val!),
-                        activeColor: const Color(0xFFE85D04),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        side: const BorderSide(
-                          color: Color(0xFFE85D04),
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Remember me',
-                      style: GoogleFonts.barlow(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: _handleForgotPassword,
+                // OTP verification code field (revealed once OTP is sent)
+                if (_otpSent) ...[
+                  _buildTextField(
+                    controller: _otpController,
+                    focusNode: _otpFocus,
+                    hint: '6-digit Verification Code',
+                    icon: Icons.lock_outline,
+                    errorText: _otpError,
+                    keyboardType: TextInputType.number,
+                    isDark: isDark,
+                    onChanged: (_) {
+                      if (_otpError != null) {
+                        setState(
+                          () => _otpError = _validateOtp(_otpController.text),
+                        );
+                      }
+                    },
+                    onSubmitted: (_) => _handleVerifyAndLogin(),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+
+                if (_otpSent)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: _isLoading
+                          ? null
+                          : () => setState(() => _otpSent = false),
                       child: Text(
-                        'Forgot Password?',
+                        'Change phone number?',
                         style: GoogleFonts.barlow(
                           color: const Color(0xFFE85D04),
                           fontSize: 13,
@@ -352,12 +360,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+
                 const SizedBox(height: 22),
 
                 ElevatedButton(
-                  onPressed: authState.isLoading ? null : _handleLogin,
+                  onPressed: _isLoading
+                      ? null
+                      : (_otpSent ? _handleVerifyAndLogin : _handleSendOtp),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE85D04),
                     foregroundColor: Colors.white,
@@ -369,7 +379,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: authState.isLoading
+                  child: _isLoading
                       ? const SizedBox(
                           height: 22,
                           width: 22,
@@ -382,7 +392,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'LOG IN',
+                              _otpSent ? 'VERIFY & LOGIN' : 'SEND OTP',
                               style: GoogleFonts.barlow(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
@@ -400,10 +410,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const CreateAccountScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const CreateAccountScreen(),
+                      ),
                     );
                   },
-
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 24),
                     child: RichText(
@@ -443,7 +454,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     required bool isDark,
     FocusNode? focusNode,
     String? errorText,
-    bool isPassword = false,
+    bool readOnly = false,
     TextInputType? keyboardType,
     ValueChanged<String>? onChanged,
     ValueChanged<String>? onSubmitted,
@@ -460,11 +471,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         TextField(
           controller: controller,
           focusNode: focusNode,
-          obscureText: isPassword ? _obscurePassword : false,
+          readOnly: readOnly,
           keyboardType: keyboardType,
-          textInputAction: isPassword
-              ? TextInputAction.done
-              : TextInputAction.next,
+          textInputAction: TextInputAction.done,
           style: GoogleFonts.barlow(color: textColor),
           onChanged: onChanged,
           onSubmitted: onSubmitted,
@@ -475,19 +484,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               fontWeight: FontWeight.w400,
             ),
             prefixIcon: Icon(icon, color: hintColor, size: 20),
-            suffixIcon: isPassword
-                ? IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      color: hintColor,
-                      size: 20,
-                    ),
-                    onPressed: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
-                  )
-                : null,
             filled: true,
             fillColor: fillColor,
             border: OutlineInputBorder(
