@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pawffy/features/auth/providers/current{_user_provider.dart';
+import 'package:pawffy/features/auth/providers/current_user_provider.dart';
+import 'package:pawffy/features/profile/data/services/static_service.dart';
 import '../data/models/vendor_profile_model.dart';
 import '../data/services/profile_service.dart';
 
@@ -205,3 +206,13 @@ class ServicesController extends AsyncNotifier<List<VendorServiceModel>> {
     ref.invalidateSelf();
   }
 }
+
+final staticServiceProvider = Provider<StaticService>((ref) => StaticService());
+
+final termsContentProvider = FutureProvider.autoDispose<String>((ref) async {
+  return await ref.read(staticServiceProvider).getTerms();
+});
+
+final privacyContentProvider = FutureProvider.autoDispose<String>((ref) async {
+  return await ref.read(staticServiceProvider).getPrivacy();
+});
