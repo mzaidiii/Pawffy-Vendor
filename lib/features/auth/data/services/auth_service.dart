@@ -9,13 +9,12 @@ class AuthService {
   final Dio _dio = DioClient.dio;
 
   Future<AuthResponseModel> login({
-    required String email,
-    required String password,
+    required String accessToken,
   }) async {
     try {
       final response = await _dio.post(
-        ApiConstants.login,
-        data: {'email': email, 'password': password},
+        ApiConstants.session,
+        data: {'accessToken': accessToken},
       );
 
       return AuthResponseModel.fromJson(response.data);
@@ -29,14 +28,14 @@ class AuthService {
   Future<AuthResponseModel> register({
     required String name,
     required String email,
-    required String password,
+    required String accessToken,
     required bool acceptTerms,
   }) async {
     try {
       final payload = {
+        'accessToken': accessToken,
         'name': name,
         'email': email,
-        'password': password,
         'acceptTerms': acceptTerms,
       };
 
