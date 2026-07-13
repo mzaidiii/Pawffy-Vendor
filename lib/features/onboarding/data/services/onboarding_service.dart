@@ -28,7 +28,7 @@ class OnboardingService {
       throw Exception(
         e.response?.data['message'] ?? 'Failed to get onboarding state',
       );
-    } catch (e, stack) {
+    } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
   }
@@ -59,7 +59,7 @@ class OnboardingService {
       throw Exception(
         e.response?.data['message'] ?? 'Failed to save business info',
       );
-    } catch (e, stack) {
+    } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
   }
@@ -100,7 +100,7 @@ class OnboardingService {
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Failed to add service');
-    } catch (e, stack) {
+    } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
   }
@@ -133,7 +133,7 @@ class OnboardingService {
       throw Exception(
         e.response?.data['message'] ?? 'Failed to update service',
       );
-    } catch (e, stack) {
+    } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
   }
@@ -148,7 +148,7 @@ class OnboardingService {
       throw Exception(
         e.response?.data['message'] ?? 'Failed to delete service',
       );
-    } catch (e, stack) {
+    } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
   }
@@ -177,7 +177,7 @@ class OnboardingService {
       throw Exception(
         e.response?.data['message'] ?? 'Failed to set availability',
       );
-    } catch (e, stack) {
+    } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
   }
@@ -206,7 +206,7 @@ class OnboardingService {
       throw Exception(
         e.response?.data['message'] ?? 'Failed to upload document',
       );
-    } catch (e, stack) {
+    } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
   }
@@ -221,7 +221,7 @@ class OnboardingService {
       throw Exception(
         e.response?.data['message'] ?? 'Failed to delete document',
       );
-    } catch (e, stack) {
+    } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
   }
@@ -236,7 +236,7 @@ class OnboardingService {
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Failed to get review');
-    } catch (e, stack) {
+    } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
   }
@@ -273,7 +273,7 @@ class OnboardingService {
       throw Exception(
         e.response?.data['message'] ?? 'Failed to load dashboard',
       );
-    } catch (e, stack) {
+    } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
   }
