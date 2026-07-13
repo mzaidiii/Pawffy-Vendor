@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:pawffy/main.dart';
-import 'package:pawffy/features/auth/providers/current{_user_provider.dart';
+import 'package:pawffy/features/auth/providers/current_user_provider.dart';
 import 'package:pawffy/features/profile/data/models/vendor_profile_model.dart';
 import 'package:pawffy/features/profile/providers/profile_controller.dart';
 import 'package:pawffy/core/utils/image_picker_helper.dart';
 import 'package:pawffy/features/profile/setting/settings_screen.dart';
 import 'package:pawffy/features/profile/setting/personal_information_screen.dart';
+import 'package:pawffy/features/profile/setting/payments_wallet_screen.dart';
+import 'package:pawffy/features/home/providers/home_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -698,7 +700,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             icon: Icons.calendar_today_outlined,
                             title: 'My Bookings',
                             subtitle: 'View your upcoming and past bookings',
-                            onTap: () {},
+                            onTap: () {
+                              ref.read(navigationIndexProvider.notifier).setIndex(1);
+                            },
                             showDivider: true,
                           ),
                           _buildMenuItem(
@@ -706,7 +710,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             icon: Icons.credit_card_outlined,
                             title: 'Payments and Wallets',
                             subtitle: 'Manage payments and refunds',
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PaymentsWalletScreen(),
+                                ),
+                              );
+                            },
                             showDivider: true,
                           ),
                           _buildMenuItem(
@@ -714,7 +725,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             icon: Icons.location_on_outlined,
                             title: 'Addresses',
                             subtitle: 'Manage your saved addresses',
-                            onTap: () {},
+                            onTap: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const PersonalInformationScreen()),
+                              );
+                              ref.read(profileControllerProvider.notifier).refresh();
+                            },
                             showDivider: true,
                           ),
                           _buildMenuItem(
@@ -735,11 +752,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             icon: Icons.headset_mic_outlined,
                             title: 'Help and Support',
                             subtitle: 'Get help and contact support',
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Opening Support ticket page...')),
-                              );
-                            },
+                            onTap: () => _showHelpSupportDialog(context),
                             showDivider: false,
                           ),
                         ],
@@ -751,6 +764,136 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               );
             },
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showHelpSupportDialog(BuildContext context) {
+    final subjectCtrl = TextEditingController();
+    final bodyCtrl = TextEditingController();
+    String selectedCategory = 'technical_issue';
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Help & Support'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: selectedCategory,
+                decoration: const InputDecoration(labelText: 'Category'),
+                onChanged: isSubmitting
+                    ? null
+                    : (val) {
+                        if (val != null) {
+                          setState(() => selectedCategory = val);
+                        }
+                      },
+                items: const [
+                  DropdownMenuItem(
+                    value: 'technical_issue',
+                    child: Text('Technical Issue'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'billing',
+                    child: Text('Billing & Payments'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'general',
+                    child: Text('General Inquiry'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: subjectCtrl,
+                enabled: !isSubmitting,
+                decoration: const InputDecoration(hintText: 'Subject'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: bodyCtrl,
+                enabled: !isSubmitting,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  hintText: 'Describe your issue...',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting ? null : () => Navigator.pop(dialogContext),
+              child: const Text('CANCEL', style: TextStyle(color: Colors.grey)),
+            ),
+            Consumer(
+              builder: (context, ref, child) => ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.orange,
+                  minimumSize: const Size(80, 36),
+                ),
+                onPressed: isSubmitting
+                    ? null
+                    : () async {
+                        if (subjectCtrl.text.trim().isEmpty ||
+                            bodyCtrl.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please fill out all fields.'),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                          return;
+                        }
+
+                        setState(() => isSubmitting = true);
+                        try {
+                          await ref
+                              .read(profileServiceProvider)
+                              .createSupportTicket(
+                                subject: subjectCtrl.text,
+                                category: selectedCategory,
+                                description: bodyCtrl.text,
+                              );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Support ticket submitted successfully!'),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                            Navigator.pop(dialogContext);
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to submit ticket: $e'),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        } finally {
+                          setState(() => isSubmitting = false);
+                        }
+                      },
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('SUBMIT'),
+              ),
+            ),
+          ],
         ),
       ),
     );
