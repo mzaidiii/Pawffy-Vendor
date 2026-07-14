@@ -6,6 +6,7 @@ import 'package:device_preview/device_preview.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pawffy/features/auth/auth_gate_screen.dart';
 import 'package:pawffy/core/config/supabase_config.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 final themeModeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(
   ThemeNotifier.new,
@@ -21,7 +22,8 @@ class ThemeNotifier extends Notifier<ThemeMode> {
 }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   if (!SupabaseConfig.useMockAuth &&

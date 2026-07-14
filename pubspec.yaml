@@ -34,19 +34,8 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  supabase_flutter: ^2.8.0
   google_fonts: ^6.3.2
-
   flutter_riverpod: ^3.3.1
   riverpod_annotation: ^4.0.2
   geolocator: ^14.0.2
@@ -60,7 +49,21 @@ dev_dependencies:
   intl: ^0.20.2
   image_picker: ^1.2.1
   permission_handler: ^11.3.1
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
+  flutter_lints: ^5.0.0
   change_app_package_name: ^1.5.0
+
 
 
 # For information on the generic Dart part of this file, see the
@@ -78,6 +81,8 @@ flutter:
   assets:
    - android/assets/Onboarding.png
    - android/assets/LoginDog.png
+   - android/assets/icon.png
+   - android/assets/splash_icon.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -104,3 +109,19 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "android/assets/icon.png"
+  min_sdk_android: 23
+
+flutter_native_splash:
+  color: "#111111"
+  image: "android/assets/splash_icon.png"
+  android: true
+  ios: true
+  android_gravity: center
+  ios_content_mode: center
+  android_12:
+    color: "#111111"
+    image: "android/assets/splash_icon.png"

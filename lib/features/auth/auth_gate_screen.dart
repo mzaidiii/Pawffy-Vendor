@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pawffy/features/auth/Onboarding_Screen.dart';
 import 'package:pawffy/features/onboarding/providers/onboarding_provider.dart';
 import 'package:pawffy/features/onboarding/screens/onboarding_flow_screen.dart';
+import 'package:pawffy/features/auth/splash_screen.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 import '../home/home_screen.dart';
 import 'providers/auth_controller.dart';
@@ -18,14 +20,19 @@ class _AuthGateScreenState extends ConsumerState<AuthGateScreen> {
   @override
   void initState() {
     super.initState();
+    // Remove the native splash screen after the first frame is drawn
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FlutterNativeSplash.remove();
+    });
     _checkAuth();
   }
 
   Future<void> _checkAuth() async {
+    final startTime = DateTime.now();
+    Widget nextScreen;
+
     try {
       final user = await ref.read(authControllerProvider.notifier).getMe();
-
-      if (!mounted) return;
 
       if (user != null) {
         final onboardingService = ref.read(onboardingServiceProvider);
@@ -40,53 +47,41 @@ class _AuthGateScreenState extends ConsumerState<AuthGateScreen> {
             final status =
                 business?['verificationStatus']?.toString() ?? 'draft';
 
-            if (!mounted) return;
-
             if (status == 'pending' || status == 'verified') {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const HomeScreen()),
-              );
+              nextScreen = const HomeScreen();
             } else {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
-              );
+              nextScreen = const OnboardingFlowScreen();
             }
           } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
-            );
+            nextScreen = const OnboardingFlowScreen();
           }
         } catch (e) {
-          if (!mounted) return;
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const OnboardingFlowScreen()),
-          );
+          nextScreen = const OnboardingFlowScreen();
         }
       } else {
-        _goToOnboarding();
+        nextScreen = const OnboardingScreen();
       }
     } catch (e) {
-      if (!mounted) return;
-      _goToOnboarding();
+      nextScreen = const OnboardingScreen();
     }
-  }
 
-  void _goToOnboarding() {
+    // Ensure the splash screen is displayed for at least 2 seconds
+    final elapsed = DateTime.now().difference(startTime);
+    final remaining = const Duration(seconds: 2) - elapsed;
+    if (remaining > Duration.zero) {
+      await Future.delayed(remaining);
+    }
+
+    if (!mounted) return;
+
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+      MaterialPageRoute(builder: (_) => nextScreen),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(child: CircularProgressIndicator(color: Color(0xFFE85D04))),
-    );
+    return const SplashScreen();
   }
 }
