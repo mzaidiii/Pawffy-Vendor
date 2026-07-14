@@ -1,108 +1,167 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:6DB33F,100:02569B&height=180&section=header&text=Pawffy%20Vendor&fontSize=50&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=The%20provider-side%20app%20for%20Pawffy&descAlignY=58&descSize=18" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=E85D04&height=220&section=header&text=Pawffy%20Vendor&fontSize=60&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=The%20provider-side%20app%20powering%20every%20groomer%2C%20vet%2C%20walker%20%26%20trainer%20on%20Pawffy&descAlignY=55&descSize=18" width="100%"/>
 
-<a href="https://git.io/typing-svg">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=20&pause=1000&color=6DB33F&center=true&vCenter=true&width=650&lines=Built+for+vets%2C+dog+walkers+%26+groomers+%F0%9F%90%BE;Manage+bookings%2C+availability+%26+earnings;Currently+in+active+early+development;Companion+app+to+Pawffy+(User)" alt="Typing SVG" />
+<a href="https://github.com/mzaidiii/Pawffy-Vendor">
+  <img src="https://readme-typing-svg.demolab.com/?lines=Flutter+app+for+pet-care+professionals;Real-time+jobs+%C2%B7+Live+GPS+%C2%B7+In-app+chat;Built+solo+by+Zaidi+%F0%9F%90%BE&font=Fira%20Code&center=true&width=650&height=45&color=E85D04&vCenter=true&size=22"/>
 </a>
 
-[![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
-[![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
-[![Spring Boot](https://img.shields.io/badge/Backend-Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+<br/>
 
-![Status](https://img.shields.io/badge/status-early--development-orange?style=flat-square)
-![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android%20%7C%20macOS%20%7C%20Linux%20%7C%20Windows-lightgrey?style=flat-square)
+<img src="https://img.shields.io/badge/Flutter-3.8.1-02569B?style=for-the-badge&logo=flutter&logoColor=white"/>
+<img src="https://img.shields.io/badge/Dart-3.8-0175C2?style=for-the-badge&logo=dart&logoColor=white"/>
+<img src="https://img.shields.io/badge/Riverpod-State%20Mgmt-4051B5?style=for-the-badge&logo=riverpod&logoColor=white"/>
+<img src="https://img.shields.io/badge/Supabase-Auth-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white"/>
+<img src="https://img.shields.io/badge/Node.js-API%20Gateway-339933?style=for-the-badge&logo=node.js&logoColor=white"/>
+
+<br/><br/>
+
+<img src="https://img.shields.io/github/stars/mzaidiii/Pawffy-Vendor?style=social"/>
+<img src="https://img.shields.io/github/forks/mzaidiii/Pawffy-Vendor?style=social"/>
+<img src="https://img.shields.io/github/last-commit/mzaidiii/Pawffy-Vendor?color=E85D04&style=flat-square"/>
+<img src="https://img.shields.io/badge/status-in%20development-yellow?style=flat-square"/>
 
 </div>
 
----
+<br/>
 
-## Overview
+## 🐾 What is this
 
-**Pawffy Vendor** is the provider-side companion app to [**Pawffy**](https://github.com/mzaidiii/Pawffy_User) — the app used by vets, dog walkers, and groomers to manage the services they offer through the Pawffy platform.
+Pawffy has two sides to it — the app pet owners use to book a walk, a grooming session, or a vet visit, and the app the **service providers** use to actually run their business on top of it. This repo is the second one.
 
-This repository is in **early, active development**. Scaffolding and project setup are in place; feature work is starting now.
+Pawffy Vendor is where groomers, vets, walkers, and trainers set up their profile, list what they offer, get discovered, accept jobs, and take a client's booking all the way from *"request received"* to *"paid out"* — with live location sharing while a job is active, milestone checklists, photo proof of work, and a chat thread with the client the whole way through.
 
-> Looking for the customer-facing app? Check out [**Pawffy_User**](https://github.com/mzaidiii/Pawffy_User).
+It talks to a Node.js API gateway, with Supabase handling phone-based auth and a PostgreSQL database sitting underneath it all.
 
----
+<br/>
 
-## Planned Features
+## ✨ Core capabilities
 
-The vendor app will share its backend and design language with Pawffy, focused on the provider workflow:
+<table>
+<tr>
+<td width="50%" valign="top">
 
-- [ ] Vendor onboarding & verification (vet / walker / groomer profiles)
-- [ ] Availability & schedule management
-- [ ] Incoming booking requests — accept / decline / reschedule
-- [ ] In-app chat with customers
-- [ ] Earnings dashboard & payout history
-- [ ] Service & pricing management
-- [ ] Push notifications for new bookings and messages
-- [ ] Reviews & ratings overview
+**🔐 Phone-first onboarding**
+OTP login via Supabase, then a guided multi-step setup — business info, service menu with pricing, weekly availability, license upload, and a review-and-submit step before an admin verifies the account.
 
-This list will be checked off and expanded as development progresses.
+**📥 Live request feed**
+Incoming bookings land in a feed the vendor can accept or reject in real time, with search and status filters (pending / upcoming / completed / canceled).
 
----
+</td>
+<td width="50%" valign="top">
 
-## Tech Stack
+**📍 Active job tracking**
+Once a job starts, GPS coordinates stream to the server on an interval, milestones get checked off as work progresses, and photos are attached along the way — right up to a final completion form.
 
-| Layer | Choice |
-|---|---|
-| Framework | Flutter (Dart) |
-| Backend | REST API (Spring Boot) — shared with Pawffy |
-| Target Platforms | iOS, Android, macOS, Linux, Windows |
+**💬 Built-in messaging & wallet**
+A dedicated chat thread per client, plus a wallet view for balance, payout history, and withdrawal requests.
 
----
+</td>
+</tr>
+</table>
 
-## Project Status
+<br/>
 
-🚧 **This project just started.** The repository currently contains the base Flutter scaffold — architecture, state management, and feature modules are being built out incrementally.
+## 🧭 How a booking actually moves through the app
 
-Progress and a proper architecture breakdown will be added to this README as the codebase grows.
+```mermaid
+sequenceDiagram
+    participant Owner as Pet Owner
+    participant API as Backend
+    participant App as Vendor App
 
----
+    Owner->>API: Sends a booking request
+    API->>App: Shows up in the request feed
+    App->>API: Vendor accepts
+    Note over App: Status → Upcoming
+    App->>API: Vendor starts the job on-site
+    Note over App: Status → Active
+    loop while job is active
+        App->>API: Location ping
+        App->>API: Milestone checked off
+        App->>API: Photo uploaded
+    end
+    App->>API: Final notes + completion form submitted
+    Note over App: Status → Completed, payout hits wallet
+```
 
-## Getting Started
+<br/>
 
-### Prerequisites
-- Flutter SDK `>=3.x`
-- Dart `>=3.x`
-- Android Studio or VS Code with the Flutter extension
+## 🏗️ Under the hood
 
-### Installation
+```
+lib/
+├── core/
+│   ├── storage/        → secure token & session storage
+│   ├── config/         → Supabase keys, env config
+│   ├── networks/       → Dio client, interceptors, API constants
+│   └── utils/          → GPS, image picking, device helpers
+└── features/
+    ├── auth/            → OTP login, signup, session gate
+    ├── onboarding/       → business setup wizard
+    ├── home/             → dashboard, presence toggle, stats
+    ├── requests/         → job feed → active job → completion
+    ├── calendar/         → working hours, blocked dates
+    ├── message/          → chat threads
+    ├── notification/     → alerts feed
+    └── profile/          → portfolio, wallet, settings
+```
+
+State is handled with **Riverpod**, networking runs through **Dio** with JWT interceptors, and tokens live in **flutter_secure_storage** so a session survives an app restart without ever touching plaintext storage.
+
+<br/>
+
+## 🎨 Design notes
+
+- Full light/dark theme support — cards, borders, and text all key off `Theme.of(context).brightness` rather than hardcoded colors.
+- One consistent accent color across the whole app: **Pawffy Orange** `#E85D04`, used for every CTA, checkmark, and active state.
+- Every form screen is scroll-safe and keyboard-aware (`resizeToAvoidBottomInset`), wrapped in `SafeArea`, with text that shrinks gracefully on smaller screens instead of wrapping badly.
+
+<br/>
+
+## 🚀 Running it locally
 
 ```bash
-# Clone the repository
+# clone it
 git clone https://github.com/mzaidiii/Pawffy-Vendor.git
 cd Pawffy-Vendor
 
-# Install dependencies
+# grab dependencies
 flutter pub get
 
-# Run on a connected device or emulator
+# run on your device/emulator of choice
 flutter run
 ```
 
----
+You'll need a `.env` (or equivalent config in `core/config`) with your Supabase project URL/anon key and the base URL of the backend API before auth will work end to end.
 
-## About the Developer
+<br/>
 
-**Mohammad Zaidi**
-Flutter & Spring Boot Developer
+## 🗺️ Where this is headed
 
-- 🏆 SIH 2025 National Finalist — *SymbioMed*, validated by the Ministry of AYUSH
-- 🐾 Building out the full Pawffy platform — customer and vendor apps — solo
-- 📱 Delivers production Flutter apps and has run Flutter workshops
-- 💡 Stack: Flutter · Dart · Spring Boot · Java · Firebase · MySQL · Docker · JWT
+- [ ] Push notifications for new job requests
+- [ ] In-app earnings analytics / weekly summaries
+- [ ] Offline-first request queue for spotty connectivity mid-job
+- [ ] Multi-language support
 
-[GitHub](https://github.com/mzaidiii) · [LinkedIn](https://linkedin.com/in/mzaidiii) · [LeetCode](https://leetcode.com/mzaidiii)
+<br/>
 
----
+## 🤝 About this project
+
+Built solo, end to end — Flutter frontend, UX flows, and API integration. Part of the larger **Pawffy** ecosystem alongside the customer-facing app.
 
 <div align="center">
+<br/>
 
-**Work in progress — watch this space.**
+<a href="https://www.linkedin.com/in/mohd-murtaza-zaidi-b18a5b294">
+  <img src="https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white"/>
+</a>
+<a href="https://x.com/">
+  <img src="https://img.shields.io/badge/X-Follow-000000?style=for-the-badge&logo=x&logoColor=white"/>
+</a>
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:02569B,100:6DB33F&height=100&section=footer" width="100%"/>
+<br/><br/>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=E85D04&height=100&section=footer"/>
 
 </div>
