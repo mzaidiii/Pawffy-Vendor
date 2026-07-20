@@ -12,10 +12,10 @@ class SplashScreen extends StatefulWidget {
   const SplashScreen({
     super.key,
     this.backgroundColor = const Color(0xFF111111),
-    this.logoPath = 'android/assets/icon.png',
-    this.logoSize = 120.0,
-    this.title = 'Pawffy',
-    this.subtitle = 'Premium Care for Your Pets',
+    this.logoPath = 'android/assets/splash_icon.png',
+    this.logoSize = 180.0,
+    this.title = 'The Pawffy',
+    this.subtitle = 'Premium Care for  Pets',
     this.showProgress = true,
   });
 
@@ -71,9 +71,7 @@ class _SplashScreenState extends State<SplashScreen>
           CurvedAnimation(parent: _textController, curve: Curves.easeOutCubic),
         );
 
-    // Start logo animation
     _logoController.forward().then((_) {
-      // Start text animation after logo finishes
       _textController.forward();
     });
   }
@@ -96,7 +94,6 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Animated Logo
                   AnimatedBuilder(
                     animation: _logoController,
                     builder: (context, child) {
@@ -113,31 +110,27 @@ class _SplashScreenState extends State<SplashScreen>
                                 BoxShadow(
                                   color: const Color(
                                     0xFFE85D04,
-                                  ).withOpacity(0.2),
+                                  ).withValues(alpha: 0.2),
                                   blurRadius: 30,
                                   spreadRadius: 5,
                                 ),
                               ],
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(
-                                widget.logoSize / 2,
-                              ),
-                              child: Image.asset(
-                                widget.logoPath,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  // Fallback in case icon asset isn't found
-                                  return Container(
+                            child: Image.asset(
+                              widget.logoPath,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return ClipOval(
+                                  child: Container(
                                     color: const Color(0xFFE85D04),
                                     child: const Icon(
                                       Icons.pets,
                                       color: Colors.white,
                                       size: 50,
                                     ),
-                                  );
-                                },
-                              ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ),
@@ -146,7 +139,6 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                   const SizedBox(height: 24),
 
-                  // Animated App Title "Pawffy"
                   AnimatedBuilder(
                     animation: _textController,
                     builder: (context, child) {
@@ -166,11 +158,11 @@ class _SplashScreenState extends State<SplashScreen>
                           style: GoogleFonts.barlow(
                             fontSize: 40,
                             fontWeight: FontWeight.w900,
-                            color: const Color(0xFFE85D04), // Pawffy Orange
+                            color: const Color(0xFFE85D04),
                             letterSpacing: 2.0,
                             shadows: [
                               Shadow(
-                                color: Colors.black.withOpacity(0.3),
+                                color: Colors.black.withValues(alpha: 0.3),
                                 offset: const Offset(2, 2),
                                 blurRadius: 4,
                               ),
@@ -194,7 +186,6 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-            // Loading / Progress at the bottom
             if (widget.showProgress)
               Positioned(
                 left: 0,
@@ -209,20 +200,19 @@ class _SplashScreenState extends State<SplashScreen>
                         Color(0xFFE85D04),
                       ),
                       strokeWidth: 3.0,
-                      backgroundColor: Colors.white.withOpacity(0.1),
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
                     ),
                   ),
                 ),
               ),
 
-            // Bottom brand label
             Positioned(
               left: 0,
               right: 0,
               bottom: 24,
               child: Center(
                 child: Text(
-                  'PAWFFY VENDOR',
+                  'The PAWFFY ',
                   style: GoogleFonts.barlow(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
