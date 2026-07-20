@@ -75,4 +75,14 @@ class ApiConstants {
   static const String withdraw = '/api/wallet/withdraw';
   static const String terms = '/api/static/terms';
   static const String privacy = '/api/static/privacy';
+
+  // Stripe Payouts
+  static const String payoutsCheck = '/api/vendor/payouts/check';
+  static const String payoutsOnboard = '/api/vendor/payouts/onboard';
+  static const String payoutsStatus = '/api/vendor/payouts/status';
+
+  // Reviews
+  static const String vendorReviews = '/api/vendor/reviews';
+  static String replyToReview(String reviewId) => '/api/vendor/reviews/$reviewId/reply';
+  static const String customerReviews = '/api/vendor/customer-reviews';
 }
