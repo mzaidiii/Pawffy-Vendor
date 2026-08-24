@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String baseUrl = 'https://pawffy-backend-yyed.onrender.com';
+  static const String baseUrl = 'https://pawffy-backend-xsfm.onrender.com';
 
   // Auth
   static const String session = '/api/auth/session';
@@ -57,10 +57,14 @@ class ApiConstants {
   static String acceptRequest(String id) => '/api/vendor/requests/$id/accept';
   static String rejectRequest(String id) => '/api/vendor/requests/$id/reject';
   static String startRequest(String id) => '/api/vendor/requests/$id/start';
-  static String updateRequestProgress(String id) => '/api/vendor/requests/$id/progress';
-  static String uploadRequestMedia(String id) => '/api/vendor/requests/$id/media';
-  static String updateRequestLocation(String id) => '/api/vendor/requests/$id/location';
-  static String completeRequest(String id) => '/api/vendor/requests/$id/complete';
+  static String updateRequestProgress(String id) =>
+      '/api/vendor/requests/$id/progress';
+  static String uploadRequestMedia(String id) =>
+      '/api/vendor/requests/$id/media';
+  static String updateRequestLocation(String id) =>
+      '/api/vendor/requests/$id/location';
+  static String completeRequest(String id) =>
+      '/api/vendor/requests/$id/complete';
 
   // Settings & Security
   static const String requestEmailChange = '/api/vendor/email/request-update';
@@ -69,12 +73,19 @@ class ApiConstants {
   static const String verifyPhoneChange = '/api/vendor/phone/verify-update';
   static const String profileUpdate = '/api/vendor/profile';
   static const String profileAvatar = '/api/vendor/profile/avatar';
-  static const String preferencesNotifications = '/api/vendor/preferences/notifications';
+  static const String preferencesNotifications =
+      '/api/vendor/preferences/notifications';
   static const String supportTickets = '/api/support/tickets';
   static const String wallet = '/api/wallet';
   static const String withdraw = '/api/wallet/withdraw';
   static const String terms = '/api/static/terms';
   static const String privacy = '/api/static/privacy';
+
+  // User Addresses
+  static const String userAddresses = '/api/users/me/addresses';
+  static String userAddressById(String id) => '/api/users/me/addresses/$id';
+  static String setUserAddressDefault(String id) =>
+      '/api/users/me/addresses/$id/default';
 
   // Stripe Payouts
   static const String payoutsCheck = '/api/vendor/payouts/check';
@@ -83,6 +94,7 @@ class ApiConstants {
 
   // Reviews
   static const String vendorReviews = '/api/vendor/reviews';
-  static String replyToReview(String reviewId) => '/api/vendor/reviews/$reviewId/reply';
+  static String replyToReview(String reviewId) =>
+      '/api/vendor/reviews/$reviewId/reply';
   static const String customerReviews = '/api/vendor/customer-reviews';
 }
