@@ -13,6 +13,8 @@ import 'package:pawffy/features/notification/providers/notification_controller.d
 
 import 'data/models/calendar_day_model.dart';
 import 'providers/calendar_providers.dart';
+import 'package:pawffy/features/requests/screens/request_details_screen.dart';
+import 'package:pawffy/features/requests/data/models/request_model.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -251,6 +253,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   // Horizontal Date Slider
   Widget _buildDateSlider(DateTime selectedDate) {
     final today = DateTime.now();
+    final bookingsAsync = ref.watch(calendarBookingsProvider);
+    final bookingsList = bookingsAsync.value ?? [];
     
     // Stable dates anchored to today in general, but shifts if selectedDate is out of window
     var baseDate = today;
@@ -281,6 +285,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 final isToday = DateUtils.isSameDay(date, today);
                 final dayName = DateFormat('E').format(date); // Mon, Tue...
                 final dayNum = DateFormat('d').format(date); // 12, 13...
+
+                final dateStr = DateFormat('yyyy-MM-dd').format(date);
+                final hasBookingOnDate = bookingsList.any((b) => b.date == dateStr);
 
                 return GestureDetector(
                   onTap: () {
@@ -329,29 +336,27 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             ),
                           ),
                         ),
-                        if (isSelected) ...[
-                          const SizedBox(height: 4),
+                        const SizedBox(height: 4),
+                        if (hasBookingOnDate)
                           Container(
-                            width: 4,
-                            height: 4,
+                            width: 5,
+                            height: 5,
                             decoration: const BoxDecoration(
                               color: AppColors.orange,
                               shape: BoxShape.circle,
                             ),
-                          ),
-                        ] else if (isToday) ...[
-                          const SizedBox(height: 4),
+                          )
+                        else if (isSelected)
                           Container(
                             width: 4,
                             height: 4,
-                            decoration: BoxDecoration(
-                              color: AppColors.orange.withOpacity(0.5),
+                            decoration: const BoxDecoration(
+                              color: AppColors.orangeLight,
                               shape: BoxShape.circle,
                             ),
-                          ),
-                        ] else ...[
-                          const SizedBox(height: 8),
-                        ],
+                          )
+                        else
+                          const SizedBox(height: 5),
                       ],
                     ),
                   ),
@@ -801,19 +806,35 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   // Booking Card UI (Matches Mockup)
   Widget _buildBookingCard(BuildContext context, BookingModel booking) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isConfirmed = booking.status.toLowerCase() == 'confirmed' ||
-        booking.status.toLowerCase() == 'completed';
+    final isCompleted = booking.status.toLowerCase() == 'completed';
+    final isConfirmed = booking.status.toLowerCase() == 'confirmed';
     final isPending = booking.status.toLowerCase() == 'pending';
 
     return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Request details for ${booking.petName} will be wired here.'),
-            duration: const Duration(seconds: 2),
-            backgroundColor: AppColors.orange,
+      onTap: () async {
+        final req = RequestModel(
+          id: booking.id,
+          status: booking.status,
+          serviceName: booking.serviceName,
+          location: booking.location,
+          time: booking.time,
+          date: booking.date,
+          price: booking.price,
+          priceDisplay: booking.priceDisplay,
+          durationMinutes: 30,
+          pet: PetModel(
+            id: '',
+            name: booking.petName,
+            photo: booking.petPhoto,
           ),
         );
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RequestDetailsScreen(request: req),
+          ),
+        );
+        ref.invalidate(calendarDayProvider);
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -942,34 +963,42 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isConfirmed
-                        ? AppColors.success.withOpacity(isDark ? 0.15 : 0.1)
-                        : isPending
-                            ? AppColors.orange.withOpacity(isDark ? 0.15 : 0.1)
-                            : Colors.grey.withOpacity(0.1),
+                    color: isCompleted
+                        ? Colors.blue.withOpacity(isDark ? 0.2 : 0.1)
+                        : isConfirmed
+                            ? AppColors.success.withOpacity(isDark ? 0.15 : 0.1)
+                            : isPending
+                                ? AppColors.orange.withOpacity(isDark ? 0.15 : 0.1)
+                                : Colors.grey.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isConfirmed
-                          ? AppColors.success.withOpacity(0.3)
-                          : isPending
-                              ? AppColors.orange.withOpacity(0.3)
-                              : Colors.grey.withOpacity(0.3),
+                      color: isCompleted
+                          ? Colors.blue.withOpacity(0.4)
+                          : isConfirmed
+                              ? AppColors.success.withOpacity(0.3)
+                              : isPending
+                                  ? AppColors.orange.withOpacity(0.3)
+                                  : Colors.grey.withOpacity(0.3),
                     ),
                   ),
                   child: Text(
-                    isConfirmed
-                        ? 'Confirmed'
-                        : isPending
-                            ? 'Pending'
-                            : 'Canceled',
+                    isCompleted
+                        ? 'Completed'
+                        : isConfirmed
+                            ? 'Confirmed'
+                            : isPending
+                                ? 'Pending'
+                                : 'Canceled',
                     style: GoogleFonts.barlow(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: isConfirmed
-                          ? AppColors.success
-                          : isPending
-                              ? AppColors.orange
-                              : Colors.grey,
+                      color: isCompleted
+                          ? Colors.blue
+                          : isConfirmed
+                              ? AppColors.success
+                              : isPending
+                                  ? AppColors.orange
+                                  : Colors.grey,
                     ),
                   ),
                 ),
