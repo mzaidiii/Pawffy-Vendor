@@ -29,4 +29,18 @@ class StorageService {
   static Future<void> clearAll() async {
     await _storage.deleteAll();
   }
+
+  static Future<void> saveSessionStartTime(String requestId, int timestampMs) async {
+    await _storage.write(key: 'session_start_$requestId', value: timestampMs.toString());
+  }
+
+  static Future<int?> getSessionStartTime(String requestId) async {
+    final val = await _storage.read(key: 'session_start_$requestId');
+    if (val != null) return int.tryParse(val);
+    return null;
+  }
+
+  static Future<void> clearSessionStartTime(String requestId) async {
+    await _storage.delete(key: 'session_start_$requestId');
+  }
 }
