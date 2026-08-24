@@ -108,13 +108,16 @@ class AuthService {
 
   Future<void> requestEmailChange({
     required String newEmail,
-    required String password,
+    String? password,
     required String token,
   }) async {
     try {
       await _dio.post(
         ApiConstants.requestEmailChange,
-        data: {'newEmail': newEmail, 'password': password},
+        data: {
+          'newEmail': newEmail,
+          if (password != null && password.isNotEmpty) 'password': password,
+        },
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
     } on DioException catch (e) {
