@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import '../data/models/calendar_day_model.dart';
 import '../data/models/blocked_date_model.dart';
 import '../data/services/calendar_service.dart';
+import 'package:pawffy/features/requests/providers/requests_controller.dart';
+import 'package:pawffy/features/requests/data/models/request_model.dart';
 
 final calendarServiceProvider = Provider<CalendarService>((ref) {
   return CalendarService();
@@ -98,3 +100,14 @@ class BlockedDatesNotifier extends AsyncNotifier<List<BlockedDateModel>> {
     }
   }
 }
+
+final calendarBookingsProvider = FutureProvider<List<RequestModel>>((ref) async {
+  final service = ref.read(requestsServiceProvider);
+  try {
+    final upcoming = await service.getRequests(status: 'upcoming');
+    final pending = await service.getRequests(status: 'pending');
+    return [...upcoming, ...pending];
+  } catch (e) {
+    return [];
+  }
+});
