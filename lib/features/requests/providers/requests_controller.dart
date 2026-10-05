@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/request_model.dart';
 import '../data/services/requests_service.dart';
+import 'package:pawffy/features/calendar/providers/calendar_providers.dart';
 
 final requestsServiceProvider = Provider<RequestsService>((ref) {
   return RequestsService();
@@ -10,7 +11,7 @@ final requestsServiceProvider = Provider<RequestsService>((ref) {
 
 class RequestsFilterNotifier extends Notifier<String> {
   @override
-  String build() => 'pending';
+  String build() => 'upcoming';
 
   void setFilter(String status) {
     state = status;
@@ -64,42 +65,34 @@ class RequestsNotifier extends AsyncNotifier<List<RequestModel>> {
   }
 
   Future<bool> acceptRequest(String requestId) async {
-    try {
-      final success = await ref.read(requestsServiceProvider).acceptRequest(requestId);
-      if (success) {
-        ref.invalidateSelf();
-        return true;
-      }
-      return false;
-    } catch (e) {
-      return false;
+    final success = await ref.read(requestsServiceProvider).acceptRequest(requestId);
+    if (success) {
+      ref.read(requestsFilterProvider.notifier).setFilter('upcoming');
+      ref.invalidateSelf();
+      ref.invalidate(calendarDayProvider);
+      return true;
     }
+    return false;
   }
 
   Future<bool> rejectRequest(String requestId) async {
-    try {
-      final success = await ref.read(requestsServiceProvider).rejectRequest(requestId);
-      if (success) {
-        ref.invalidateSelf();
-        return true;
-      }
-      return false;
-    } catch (e) {
-      return false;
+    final success = await ref.read(requestsServiceProvider).rejectRequest(requestId);
+    if (success) {
+      ref.invalidateSelf();
+      ref.invalidate(calendarDayProvider);
+      return true;
     }
+    return false;
   }
 
   Future<bool> startRequest(String requestId) async {
-    try {
-      final success = await ref.read(requestsServiceProvider).startRequest(requestId);
-      if (success) {
-        ref.invalidateSelf();
-        return true;
-      }
-      return false;
-    } catch (e) {
-      return false;
+    final success = await ref.read(requestsServiceProvider).startRequest(requestId);
+    if (success) {
+      ref.invalidateSelf();
+      ref.invalidate(calendarDayProvider);
+      return true;
     }
+    return false;
   }
 
   Future<bool> updateProgress(String requestId, Map<String, dynamic> progressData) async {
@@ -147,15 +140,12 @@ class RequestsNotifier extends AsyncNotifier<List<RequestModel>> {
   }
 
   Future<bool> completeRequest(String requestId, FormData formData) async {
-    try {
-      final success = await ref.read(requestsServiceProvider).completeRequest(requestId, formData);
-      if (success) {
-        ref.invalidateSelf();
-        return true;
-      }
-      return false;
-    } catch (e) {
-      return false;
+    final success = await ref.read(requestsServiceProvider).completeRequest(requestId, formData);
+    if (success) {
+      ref.invalidateSelf();
+      ref.invalidate(calendarDayProvider);
+      return true;
     }
+    return false;
   }
 }

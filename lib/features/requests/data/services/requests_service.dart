@@ -13,6 +13,23 @@ class RequestsService {
     return Options(headers: {'Authorization': 'Bearer $token'});
   }
 
+  String _parseDioError(DioException e, String fallbackMsg) {
+    if (e.response?.data != null) {
+      final data = e.response!.data;
+      if (data is Map) {
+        if (data.containsKey('message') && data['message'] != null) {
+          return data['message'].toString();
+        }
+        if (data.containsKey('error') && data['error'] != null) {
+          return data['error'].toString();
+        }
+      } else if (data is String && data.isNotEmpty && !data.startsWith('<!DOCTYPE')) {
+        return data;
+      }
+    }
+    return e.message ?? fallbackMsg;
+  }
+
   Future<List<RequestModel>> getRequests({required String status, String? search}) async {
     try {
       final options = await _authHeader;
@@ -38,9 +55,7 @@ class RequestsService {
       }
       return [];
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to load requests',
-      );
+      throw Exception(_parseDioError(e, 'Failed to load requests'));
     } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
@@ -55,9 +70,7 @@ class RequestsService {
       );
       return response.data != null && response.data['success'] == true;
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to accept request',
-      );
+      throw Exception(_parseDioError(e, 'Failed to accept request'));
     } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
@@ -72,9 +85,7 @@ class RequestsService {
       );
       return response.data != null && response.data['success'] == true;
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to reject request',
-      );
+      throw Exception(_parseDioError(e, 'Failed to reject request'));
     } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
@@ -89,9 +100,7 @@ class RequestsService {
       );
       return response.data != null && response.data['success'] == true;
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to start request',
-      );
+      throw Exception(_parseDioError(e, 'Failed to start request'));
     } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
@@ -107,9 +116,7 @@ class RequestsService {
       );
       return response.data != null && response.data['success'] == true;
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to update request progress',
-      );
+      throw Exception(_parseDioError(e, 'Failed to update request progress'));
     } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
@@ -131,9 +138,7 @@ class RequestsService {
       );
       return response.data != null && response.data['success'] == true;
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to upload media',
-      );
+      throw Exception(_parseDioError(e, 'Failed to upload media'));
     } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
@@ -160,9 +165,7 @@ class RequestsService {
       );
       return response.data != null && response.data['success'] == true;
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to update location',
-      );
+      throw Exception(_parseDioError(e, 'Failed to update location'));
     } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
@@ -180,9 +183,7 @@ class RequestsService {
       );
       return response.data != null && response.data['success'] == true;
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to complete request',
-      );
+      throw Exception(_parseDioError(e, 'Failed to complete request'));
     } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }

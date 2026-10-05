@@ -21,7 +21,6 @@ class RequestsScreen extends ConsumerStatefulWidget {
 class _RequestsScreenState extends ConsumerState<RequestsScreen> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounceTimer;
-  String _activeStatus = 'pending'; // pending, upcoming, completed, canceled
 
   @override
   void initState() {
@@ -46,9 +45,6 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
   }
 
   void _changeStatus(String status) {
-    setState(() {
-      _activeStatus = status;
-    });
     ref.read(requestsFilterProvider.notifier).setFilter(status);
   }
 
@@ -139,6 +135,7 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
   // --- VERIFIED STATE ---
   Widget _buildRequestsContent(BuildContext context, bool isDark) {
     final requestsAsync = ref.watch(requestsNotifierProvider);
+    final activeStatus = ref.watch(requestsFilterProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -212,7 +209,7 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Requests for status "$_activeStatus" will appear here.',
+                          'Requests for status "$activeStatus" will appear here.',
                           style: const TextStyle(
                             color: AppColors.grey,
                             fontSize: 13,
@@ -348,6 +345,7 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
   }
 
   Widget _buildFilterChips(bool isDark) {
+    final activeStatus = ref.watch(requestsFilterProvider);
     final statusMapping = {
       'pending': 'Pending',
       'upcoming': 'Upcoming',
@@ -361,7 +359,7 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         children: statusMapping.entries.map((entry) {
-          final isSelected = _activeStatus == entry.key;
+          final isSelected = activeStatus == entry.key;
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
@@ -563,7 +561,7 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          req.time,
+                          req.formattedDateTime,
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.grey,
@@ -580,6 +578,52 @@ class _RequestsScreenState extends ConsumerState<RequestsScreen> {
                       ),
                     ],
                   ),
+                  if (req.status == 'pending') ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () async {
+                            try {
+                              final success = await ref.read(requestsNotifierProvider.notifier).rejectRequest(req.id);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(success ? 'Request rejected successfully!' : 'Failed to reject request.'),
+                                    backgroundColor: success ? AppColors.success : AppColors.error,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                final errorMsg = e.toString().replaceFirst('Exception: ', '');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(errorMsg),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.error),
+                            foregroundColor: AppColors.error,
+                            minimumSize: const Size(100, 32),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            'REJECT',
+                            style: GoogleFonts.barlow(fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

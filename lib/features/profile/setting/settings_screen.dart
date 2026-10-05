@@ -11,6 +11,7 @@ import 'package:pawffy/features/profile/providers/profile_controller.dart';
 
 // Settings sub-screens
 import 'personal_information_screen.dart';
+import 'view_personal_information_screen.dart';
 import 'change_password_screen.dart';
 import 'change_contact_screen.dart';
 
@@ -192,27 +193,12 @@ class SettingsScreen extends ConsumerWidget {
                     context,
                     icon: Icons.person_outline,
                     title: 'Personal Information',
-                    subtitle: 'Update your personal information',
+                    subtitle: 'View and manage your personal details',
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const PersonalInformationScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildDivider(isDark),
-                  _buildSettingTile(
-                    context,
-                    icon: Icons.lock_outline,
-                    title: 'Change Password',
-                    subtitle: 'Update your account password',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ChangePasswordScreen(),
+                          builder: (_) => const ViewPersonalInformationScreen(),
                         ),
                       );
                     },
@@ -374,6 +360,16 @@ class SettingsScreen extends ConsumerWidget {
                       }
                     },
                   ),
+                  _buildDivider(isDark),
+                  _buildSettingTile(
+                    context,
+                    icon: Icons.delete_forever_rounded,
+                    title: 'Delete Account',
+                    titleColor: AppColors.error,
+                    iconColor: AppColors.error,
+                    subtitle: 'Permanently delete your account & data',
+                    onTap: () => _showDeleteAccountDialog(context, ref),
+                  ),
                 ],
               ),
               const SizedBox(height: 30),
@@ -382,6 +378,76 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _showDeleteAccountDialog(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 24),
+              const SizedBox(width: 8),
+              Text(
+                'Delete Account',
+                style: GoogleFonts.barlow(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.error,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Are you sure you want to permanently delete your account? All your personal data, services, and profile information will be erased. This action cannot be undone.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: isDark ? AppColors.white.withOpacity(0.8) : AppColors.black.withOpacity(0.8),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                'CANCEL',
+                style: GoogleFonts.barlow(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.grey,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(
+                'DELETE PERMANENTLY',
+                style: GoogleFonts.barlow(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.white,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      try {
+        await ref.read(profileServiceProvider).deleteAccount();
+      } catch (_) {}
+      await StorageService.clearAll();
+      ref.read(currentUserProvider.notifier).clear();
+      if (context.mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    }
   }
 
   Widget _buildSectionTitle(String title) {

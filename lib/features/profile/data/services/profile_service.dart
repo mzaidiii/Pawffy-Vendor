@@ -47,6 +47,17 @@ class ProfileService {
     }
   }
 
+  String _parseDioError(DioException e, String fallback) {
+    if (e.response?.data != null) {
+      if (e.response!.data is Map) {
+        return e.response!.data['message']?.toString() ?? fallback;
+      } else if (e.response!.data is String) {
+        return e.response!.data.toString().isNotEmpty ? e.response!.data.toString() : fallback;
+      }
+    }
+    return e.message ?? fallback;
+  }
+
   Future<void> addService({
     required String serviceType,
     required String name,
@@ -80,9 +91,7 @@ class ProfileService {
         options: options,
       );
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to add service',
-      );
+      throw Exception(_parseDioError(e, 'Failed to add service'));
     }
   }
 
@@ -182,8 +191,12 @@ class ProfileService {
   Future<void> uploadAvatar(String filePath) async {
     try {
       final options = await _getOptions();
+      final filename = filePath.split(RegExp(r'[/\\]')).last;
       final formData = FormData.fromMap({
-        'avatar': await MultipartFile.fromFile(filePath),
+        'avatar': await MultipartFile.fromFile(
+          filePath,
+          filename: filename,
+        ),
       });
       await _dio.post(
         ApiConstants.profileAvatar,
@@ -191,9 +204,7 @@ class ProfileService {
         options: options,
       );
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to upload avatar',
-      );
+      throw Exception(_parseDioError(e, 'Failed to upload avatar'));
     }
   }
 
@@ -259,6 +270,21 @@ class ProfileService {
     } on DioException catch (e) {
       throw Exception(
         e.response?.data['message'] ?? 'Failed to submit support ticket',
+      );
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    try {
+      final options = await _getOptions();
+      await _dio.delete(
+        '/api/users/me',
+        data: {'confirm': 'DELETE'},
+        options: options,
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Failed to delete account',
       );
     }
   }

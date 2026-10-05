@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:pawffy/main.dart';
+import 'package:pawffy/core/utils/image_picker_helper.dart';
 import 'package:pawffy/features/auth/providers/current_user_provider.dart';
 import 'package:pawffy/features/profile/providers/profile_controller.dart';
 
@@ -22,6 +24,7 @@ class _PersonalInformationScreenState extends ConsumerState<PersonalInformationS
   final _pinCodeCtrl = TextEditingController();
   String _selectedGender = 'Male';
   bool _isLoading = false;
+  File? _imageFile;
 
   @override
   void initState() {
@@ -60,6 +63,9 @@ class _PersonalInformationScreenState extends ConsumerState<PersonalInformationS
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final profile = ref.watch(profileControllerProvider).asData?.value;
+    final user = ref.watch(currentUserProvider).asData?.value;
+    final avatarUrl = profile?.profile.profileImage ?? user?.profileImage;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -97,36 +103,65 @@ class _PersonalInformationScreenState extends ConsumerState<PersonalInformationS
                   children: [
                     // Avatar display
                     Center(
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: 90,
-                            height: 90,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0E0E0),
-                              border: Border.all(color: AppColors.orange, width: 2),
-                            ),
-                            child: const Icon(Icons.person_outline, color: Colors.grey, size: 40),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              width: 28,
-                              height: 28,
-                              decoration: const BoxDecoration(
-                                color: AppColors.orange,
+                      child: GestureDetector(
+                        onTap: () async {
+                          final source = await ImagePickerHelper.showSourceBottomSheet(context);
+                          if (source != null) {
+                            final file = await ImagePickerHelper.pickImageWithPermission(
+                              context: context,
+                              source: source,
+                            );
+                            if (file != null) {
+                              setState(() {
+                                _imageFile = File(file.path);
+                              });
+                            }
+                          }
+                        },
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: 90,
+                              height: 90,
+                              decoration: BoxDecoration(
                                 shape: BoxShape.circle,
+                                color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE0E0E0),
+                                border: Border.all(color: AppColors.orange, width: 2),
+                                image: _imageFile != null
+                                    ? DecorationImage(
+                                        image: FileImage(_imageFile!),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : (avatarUrl != null && avatarUrl.isNotEmpty
+                                        ? DecorationImage(
+                                            image: ImagePickerHelper.getImageProvider(avatarUrl),
+                                            fit: BoxFit.cover,
+                                          )
+                                        : null),
                               ),
-                              child: const Icon(
-                                Icons.camera_alt_outlined,
-                                color: Colors.white,
-                                size: 14,
+                              child: (_imageFile == null && (avatarUrl == null || avatarUrl.isEmpty))
+                                  ? const Icon(Icons.person_outline, color: Colors.grey, size: 40)
+                                  : null,
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.orange,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt_outlined,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -244,6 +279,11 @@ class _PersonalInformationScreenState extends ConsumerState<PersonalInformationS
                       : () async {
                           setState(() => _isLoading = true);
                           try {
+                            if (_imageFile != null) {
+                              await ref
+                                  .read(profileControllerProvider.notifier)
+                                  .uploadAvatar(_imageFile!.path);
+                            }
                             final profile = ref.read(profileControllerProvider).asData?.value;
                             await ref.read(profileControllerProvider.notifier).updateProfile(
                                   contactName: _fullNameCtrl.text,
@@ -269,9 +309,10 @@ class _PersonalInformationScreenState extends ConsumerState<PersonalInformationS
                             }
                           } catch (e) {
                             if (mounted) {
+                              final errorMsg = e.toString().replaceFirst('Exception: ', '');
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Failed to save changes: $e'),
+                                  content: Text('Failed to save changes: $errorMsg'),
                                   backgroundColor: AppColors.error,
                                 ),
                               );

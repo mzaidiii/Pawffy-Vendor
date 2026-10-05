@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:pawffy/main.dart';
 import '../providers/wallet_controller.dart';
+import '../providers/payout_controller.dart';
+import 'stripe_onboarding_webview.dart';
 
 class PaymentsWalletScreen extends ConsumerStatefulWidget {
   const PaymentsWalletScreen({super.key});
@@ -171,10 +173,101 @@ class _PaymentsWalletScreenState extends ConsumerState<PaymentsWalletScreen> {
     }
   }
 
+  Future<void> _startStripeOnboarding(BuildContext context) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+            ),
+            SizedBox(width: 16),
+            Text('Generating Stripe Connect onboarding link...'),
+          ],
+        ),
+        duration: Duration(seconds: 4),
+      ),
+    );
+
+    final url = await ref.read(payoutControllerProvider.notifier).linkStripeAccount();
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    if (url == null || url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to generate onboarding link. Try again.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    final success = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => StripeOnboardingWebView(url: url),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (success == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+              ),
+              SizedBox(width: 16),
+              Text('Verifying payout activation status...'),
+            ],
+          ),
+          duration: Duration(days: 1),
+        ),
+      );
+
+      final verified = await ref.read(payoutControllerProvider.notifier).verifyAndSyncStatus();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
+
+      if (verified) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Stripe payout account successfully verified and activated!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Onboarding completed but payouts are not fully enabled yet. Check your email/Stripe dashboard.'),
+            backgroundColor: AppColors.orange,
+          ),
+        );
+      }
+    } else if (success == false) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Onboarding link expired. Please try linking again.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final walletAsync = ref.watch(walletControllerProvider);
+    final payoutAsync = ref.watch(payoutControllerProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -232,11 +325,124 @@ class _PaymentsWalletScreenState extends ConsumerState<PaymentsWalletScreen> {
           data: (wallet) {
             return RefreshIndicator(
               color: AppColors.orange,
-              onRefresh: () => ref.read(walletControllerProvider.notifier).refresh(),
+              onRefresh: () async {
+                await ref.read(walletControllerProvider.notifier).refresh();
+                await ref.read(payoutControllerProvider.notifier).refreshStatus();
+              },
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 children: [
+                  payoutAsync.when(
+                    loading: () => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: CircularProgressIndicator(color: AppColors.orange),
+                      ),
+                    ),
+                    error: (err, _) => Container(
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.red.withOpacity(0.2)),
+                      ),
+                      child: Text(
+                        'Failed to load payout settings: ${err.toString().replaceFirst('Exception: ', '')}',
+                        style: GoogleFonts.barlow(color: Colors.red, fontSize: 13),
+                      ),
+                    ),
+                    data: (payoutState) {
+                      final hasStripe = payoutState.onboarded && payoutState.payoutsEnabled;
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.darkCard : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: (hasStripe ? AppColors.success : AppColors.error).withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  hasStripe ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
+                                  color: hasStripe ? AppColors.success : AppColors.orange,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'STRIPE PAYOUTS',
+                                  style: GoogleFonts.barlow(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: isDark ? Colors.white : Colors.black87,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: (hasStripe ? AppColors.success : AppColors.error).withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    hasStripe ? 'ACTIVE' : 'INACTIVE',
+                                    style: GoogleFonts.barlow(
+                                      color: hasStripe ? AppColors.success : AppColors.error,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              hasStripe
+                                  ? 'Your Stripe Connect account is linked. Card payments from customers will be deposited directly to your bank account.'
+                                  : 'Stripe payouts are not set up. Card payments from customers will be blocked until your bank payouts setup is completed.',
+                              style: GoogleFonts.barlow(
+                                fontSize: 12,
+                                color: isDark ? Colors.white70 : Colors.black54,
+                                height: 1.4,
+                              ),
+                            ),
+                            if (!hasStripe) ...[
+                              const SizedBox(height: 14),
+                              ElevatedButton(
+                                onPressed: () => _startStripeOnboarding(context),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.orange,
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size(double.infinity, 40),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                child: Text(
+                                  'LINK STRIPE ACCOUNT',
+                                  style: GoogleFonts.barlow(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                   // Gradient Wallet Card
                   Container(
                     width: double.infinity,

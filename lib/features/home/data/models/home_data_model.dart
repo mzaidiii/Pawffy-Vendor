@@ -225,11 +225,11 @@ class BookingModel {
       petPhoto: json['petPhoto']?.toString() ?? (json['pet'] != null ? json['pet']['photo'] : null),
       serviceName: json['serviceName']?.toString() ?? (json['service'] != null ? (json['service']['name'] ?? '') : ''),
       location: json['location']?.toString() ?? json['address']?.toString() ?? '',
-      time: json['time']?.toString() ?? '',
+      time: json['time']?.toString() ?? json['bookingTime']?.toString() ?? json['booking_time']?.toString() ?? '',
       priceDisplay: json['priceDisplay']?.toString() ?? (json['price'] != null ? '\$${json['price']}' : '\$0'),
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       status: json['status']?.toString() ?? 'pending',
-      date: json['date']?.toString(),
+      date: json['date']?.toString() ?? json['bookingDate']?.toString() ?? json['booking_date']?.toString(),
     );
   }
 }

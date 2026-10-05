@@ -9,7 +9,9 @@ import 'package:pawffy/features/profile/providers/profile_controller.dart';
 import 'package:pawffy/core/utils/image_picker_helper.dart';
 import 'package:pawffy/features/profile/setting/settings_screen.dart';
 import 'package:pawffy/features/profile/setting/personal_information_screen.dart';
+import 'package:pawffy/features/profile/setting/manage_addresses_screen.dart';
 import 'package:pawffy/features/profile/setting/payments_wallet_screen.dart';
+import 'package:pawffy/features/reviews/screens/my_reviews_screen.dart';
 import 'package:pawffy/features/home/providers/home_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -722,13 +724,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                           _buildMenuItem(
                             context,
+                            icon: Icons.rate_review_outlined,
+                            title: 'My Reviews',
+                            subtitle: 'View and reply to customer reviews',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const MyReviewsScreen(),
+                                ),
+                              );
+                            },
+                            showDivider: true,
+                          ),
+                          _buildMenuItem(
+                            context,
                             icon: Icons.location_on_outlined,
                             title: 'Addresses',
                             subtitle: 'Manage your saved addresses',
                             onTap: () async {
                               await Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (_) => const PersonalInformationScreen()),
+                                MaterialPageRoute(builder: (_) => const ManageAddressesScreen()),
                               );
                               ref.read(profileControllerProvider.notifier).refresh();
                             },
@@ -1237,7 +1254,10 @@ class _ServiceFormBottomSheetState extends ConsumerState<ServiceFormBottomSheet>
   @override
   void initState() {
     super.initState();
-    _serviceType = widget.service?.serviceType ?? 'groomer';
+    final validTypes = ['groomer', 'vet', 'walker', 'trainer', 'sitter', 'boarding', 'transport', 'poop_scooper'];
+    final initialType = widget.service?.serviceType;
+    _serviceType = (initialType != null && validTypes.contains(initialType)) ? initialType : 'groomer';
+
     _nameController = TextEditingController(text: widget.service?.name ?? '');
     _descController = TextEditingController(text: widget.service?.description ?? '');
     _inclusionsController = TextEditingController(text: widget.service?.inclusions.join(', ') ?? '');
@@ -1246,7 +1266,10 @@ class _ServiceFormBottomSheetState extends ConsumerState<ServiceFormBottomSheet>
     _priceController = TextEditingController(text: widget.service?.price?.toString() ?? '');
     _minPriceController = TextEditingController(text: widget.service?.minPrice?.toString() ?? '');
     _maxPriceController = TextEditingController(text: widget.service?.maxPrice?.toString() ?? '');
-    _serviceLocation = widget.service?.serviceLocation ?? 'at_my_place';
+
+    final validLocations = ['at_my_place', 'at_client_place'];
+    final initialLoc = widget.service?.serviceLocation;
+    _serviceLocation = (initialLoc != null && validLocations.contains(initialLoc)) ? initialLoc : 'at_my_place';
   }
 
   @override
@@ -1295,8 +1318,12 @@ class _ServiceFormBottomSheetState extends ConsumerState<ServiceFormBottomSheet>
               serviceLocation: _serviceLocation,
             );
         if (mounted) {
+          Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Service added successfully!')),
+            const SnackBar(
+              content: Text('Service added successfully!'),
+              backgroundColor: AppColors.success,
+            ),
           );
         }
       } else {
@@ -1315,16 +1342,23 @@ class _ServiceFormBottomSheetState extends ConsumerState<ServiceFormBottomSheet>
               serviceLocation: _serviceLocation,
             );
         if (mounted) {
+          Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Service updated successfully!')),
+            const SnackBar(
+              content: Text('Service updated successfully!'),
+              backgroundColor: AppColors.success,
+            ),
           );
         }
       }
-      if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
+        final errorMsg = e.toString().replaceFirst('Exception: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {
@@ -1519,6 +1553,8 @@ class _ServiceFormBottomSheetState extends ConsumerState<ServiceFormBottomSheet>
                   DropdownMenuItem(value: 'trainer', child: Text('Trainer')),
                   DropdownMenuItem(value: 'sitter', child: Text('Sitter')),
                   DropdownMenuItem(value: 'boarding', child: Text('Boarding')),
+                  DropdownMenuItem(value: 'transport', child: Text('Pet Transport')),
+                  DropdownMenuItem(value: 'poop_scooper', child: Text('Poop Scooper')),
                 ],
                 onChanged: (val) {
                   if (val != null) {
@@ -1703,7 +1739,6 @@ class _ServiceFormBottomSheetState extends ConsumerState<ServiceFormBottomSheet>
                 items: const [
                   DropdownMenuItem(value: 'at_my_place', child: Text('At My Place')),
                   DropdownMenuItem(value: 'at_client_place', child: Text('At Client Place')),
-                  DropdownMenuItem(value: 'both', child: Text('Both')),
                 ],
                 onChanged: (val) {
                   if (val != null) {

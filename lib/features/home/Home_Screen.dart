@@ -10,6 +10,11 @@ import 'package:pawffy/features/notification/notification_screen.dart';
 import 'package:pawffy/features/profile/profile_screen.dart';
 import 'package:pawffy/features/calendar/calendar_screen.dart';
 import 'package:pawffy/features/requests/screens/requests_screen.dart';
+import 'package:pawffy/features/requests/screens/request_details_screen.dart';
+import 'package:pawffy/features/requests/data/models/request_model.dart';
+import 'package:pawffy/features/requests/providers/requests_controller.dart';
+import 'package:pawffy/features/profile/setting/payments_wallet_screen.dart';
+import 'package:pawffy/features/reviews/screens/my_reviews_screen.dart';
 import 'package:pawffy/features/home/providers/home_provider.dart';
 import 'package:pawffy/main.dart';
 
@@ -28,6 +33,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentIndex = ref.watch(navigationIndexProvider);
+    ref.listen<int>(navigationIndexProvider, (previous, next) {
+      if (next == 0) {
+        ref.read(homeControllerProvider.notifier).refresh();
+      }
+    });
     SystemChrome.setSystemUIOverlayStyle(
       isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
     );
@@ -149,6 +159,18 @@ class HomeTabBody extends ConsumerWidget {
         final banner = homeData.banner;
         final glance = homeData.todayAtAGlance;
         final bookings = homeData.upcomingBookings;
+        bool isToday(String? dateStr) {
+          if (dateStr == null) return false;
+          final date = DateTime.tryParse(dateStr);
+          if (date == null) {
+            final now = DateTime.now();
+            final todayPattern = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+            return dateStr.contains(todayPattern);
+          }
+          final now = DateTime.now();
+          return date.year == now.year && date.month == now.month && date.day == now.day;
+        }
+        final todayBookings = bookings.where((b) => isToday(b.date)).toList();
 
         return SafeArea(
           bottom: false,
@@ -399,7 +421,7 @@ class HomeTabBody extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildTodayGlanceGrid(context, glance),
+                    _buildTodayGlanceGrid(context, ref, glance),
 
                     const SizedBox(height: 24),
 
@@ -416,7 +438,7 @@ class HomeTabBody extends ConsumerWidget {
                     const SizedBox(height: 12),
                     _buildUpcomingBookings(
                       context,
-                      bookings,
+                      todayBookings,
                       appStatus.isPending,
                     ),
 
@@ -433,7 +455,7 @@ class HomeTabBody extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildQuickActionsGrid(context),
+                    _buildQuickActionsGrid(context, ref),
 
                     const SizedBox(height: 20),
 
@@ -864,7 +886,7 @@ class HomeTabBody extends ConsumerWidget {
     );
   }
 
-  Widget _buildTodayGlanceGrid(BuildContext context, TodayAtAGlance glance) {
+  Widget _buildTodayGlanceGrid(BuildContext context, WidgetRef ref, TodayAtAGlance glance) {
     return Column(
       children: [
         Row(
@@ -877,6 +899,9 @@ class HomeTabBody extends ConsumerWidget {
                 label: glance.schedule.label,
                 labelColor: AppColors.success,
                 icon: Icons.calendar_today_outlined,
+                onTap: () {
+                  ref.read(navigationIndexProvider.notifier).setIndex(2);
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -888,6 +913,10 @@ class HomeTabBody extends ConsumerWidget {
                 label: glance.newRequests.label,
                 labelColor: AppColors.orange,
                 icon: Icons.assignment_outlined,
+                onTap: () {
+                  ref.read(requestsFilterProvider.notifier).setFilter('upcoming');
+                  ref.read(navigationIndexProvider.notifier).setIndex(1);
+                },
               ),
             ),
           ],
@@ -903,6 +932,14 @@ class HomeTabBody extends ConsumerWidget {
                 label: glance.earnings.changeLabel,
                 labelColor: AppColors.success,
                 icon: Icons.account_balance_wallet_outlined,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PaymentsWalletScreen(),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -920,6 +957,14 @@ class HomeTabBody extends ConsumerWidget {
                 icon: Icons.star_rounded,
                 isRating: true,
                 ratingScore: glance.rating.average,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const MyReviewsScreen(),
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -937,112 +982,117 @@ class HomeTabBody extends ConsumerWidget {
     required IconData icon,
     bool isRating = false,
     double ratingScore = 0.0,
+    VoidCallback? onTap,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.1 : 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
           ),
-        ],
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.barlow(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
-                ),
-              ),
-              Icon(
-                Icons.arrow_outward_rounded,
-                size: 14,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                  color: AppColors.orange,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: Colors.white, size: 18),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      value,
-                      style: GoogleFonts.barlow(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    if (isRating && ratingScore > 0.0)
-                      Row(
-                        children: List.generate(5, (starIdx) {
-                          final isFilled = ratingScore >= starIdx + 1;
-                          return Icon(
-                            Icons.star_rounded,
-                            color: isFilled
-                                ? Colors.amber
-                                : Colors.grey.withOpacity(0.3),
-                            size: 10,
-                          );
-                        }),
-                      )
-                    else
-                      Text(
-                        label,
-                        style: GoogleFonts.barlow(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: labelColor,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (isRating) ...[
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.barlow(
-                fontSize: 10,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-              ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.1 : 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
-        ],
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.barlow(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_outward_rounded,
+                  size: 14,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    color: AppColors.orange,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        value,
+                        style: GoogleFonts.barlow(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      if (isRating && ratingScore > 0.0)
+                        Row(
+                          children: List.generate(5, (starIdx) {
+                            final isFilled = ratingScore >= starIdx + 1;
+                            return Icon(
+                              Icons.star_rounded,
+                              color: isFilled
+                                  ? Colors.amber
+                                  : Colors.grey.withOpacity(0.3),
+                              size: 10,
+                            );
+                          }),
+                        )
+                      else
+                        Text(
+                          label,
+                          style: GoogleFonts.barlow(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: labelColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (isRating) ...[
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: GoogleFonts.barlow(
+                  fontSize: 10,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -1115,156 +1165,177 @@ class HomeTabBody extends ConsumerWidget {
     final isConfirmed = booking.status.toLowerCase() == 'confirmed';
     final isPendingStatus = booking.status.toLowerCase() == 'pending';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
+    return GestureDetector(
+      onTap: () {
+        final req = RequestModel(
+          id: booking.id,
+          status: booking.status,
+          serviceName: booking.serviceName,
+          location: booking.location,
+          time: booking.time,
+          date: booking.date,
+          price: booking.price,
+          priceDisplay: booking.priceDisplay,
+          durationMinutes: 30,
+          pet: PetModel(
+            id: '',
+            name: booking.petName,
+            photo: booking.petPhoto,
+          ),
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RequestDetailsScreen(request: req),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.1 : 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.1 : 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          // Avatar and Time column
-          Column(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(25),
-                child: booking.petPhoto != null && booking.petPhoto!.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: booking.petPhoto!,
-                        width: 44,
-                        height: 44,
-                        fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) =>
-                            _buildFallbackPetAvatar(booking.petName),
-                      )
-                    : _buildFallbackPetAvatar(booking.petName),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                booking.time,
-                style: GoogleFonts.barlow(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(width: 14),
-
-          // Name and Details column
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            // Avatar and Time column
+            Column(
               children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(25),
+                  child: booking.petPhoto != null && booking.petPhoto!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: booking.petPhoto!,
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                          errorWidget: (_, __, ___) =>
+                              _buildFallbackPetAvatar(booking.petName),
+                        )
+                      : _buildFallbackPetAvatar(booking.petName),
+                ),
+                const SizedBox(height: 6),
                 Text(
-                  booking.petName,
+                  booking.time,
                   style: GoogleFonts.barlow(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
+              ],
+            ),
+
+            const SizedBox(width: 14),
+
+            // Name and Details column
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    booking.petName,
+                    style: GoogleFonts.barlow(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    booking.serviceName,
+                    style: GoogleFonts.barlow(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 13,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          booking.location,
+                          style: GoogleFonts.barlow(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(width: 8),
+
+            // Price & Status column
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
                 Text(
-                  booking.serviceName,
+                  booking.priceDisplay,
                   style: GoogleFonts.barlow(
-                    fontSize: 12,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.orange,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 11,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.5),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isConfirmed
+                        ? AppColors.success.withOpacity(0.15)
+                        : (isPendingStatus
+                              ? AppColors.orange.withOpacity(0.15)
+                              : Colors.grey.withOpacity(0.15)),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    booking.status.toUpperCase(),
+                    style: GoogleFonts.barlow(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: isConfirmed
+                          ? AppColors.success
+                          : (isPendingStatus ? AppColors.orange : Colors.grey),
                     ),
-                    const SizedBox(width: 2),
-                    Expanded(
-                      child: Text(
-                        booking.location,
-                        style: GoogleFonts.barlow(
-                          fontSize: 11,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.5),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
-          ),
 
-          const SizedBox(width: 8),
-
-          // Price and Status badge column
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                booking.priceDisplay,
-                style: GoogleFonts.barlow(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: isConfirmed
-                      ? AppColors.success.withOpacity(0.15)
-                      : (isPendingStatus
-                            ? AppColors.orange.withOpacity(0.15)
-                            : Colors.grey.withOpacity(0.15)),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  booking.status.toUpperCase(),
-                  style: GoogleFonts.barlow(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: isConfirmed
-                        ? AppColors.success
-                        : (isPendingStatus ? AppColors.orange : Colors.grey),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(width: 4),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-            size: 20,
-          ),
-        ],
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1290,7 +1361,7 @@ class HomeTabBody extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActionsGrid(BuildContext context) {
+  Widget _buildQuickActionsGrid(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         Row(
@@ -1301,15 +1372,7 @@ class HomeTabBody extends ConsumerWidget {
                 label: 'Manage Availability',
                 icon: Icons.calendar_month_outlined,
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Please use the Calendar tab for detailed availability scheduling.',
-                        style: GoogleFonts.barlow(),
-                      ),
-                      backgroundColor: AppColors.orange,
-                    ),
-                  );
+                  ref.read(navigationIndexProvider.notifier).setIndex(2);
                 },
               ),
             ),
@@ -1320,15 +1383,7 @@ class HomeTabBody extends ConsumerWidget {
                 label: 'Services',
                 icon: Icons.pets_outlined,
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Services list is editable under Profile -> Services list.',
-                        style: GoogleFonts.barlow(),
-                      ),
-                      backgroundColor: AppColors.orange,
-                    ),
-                  );
+                  ref.read(navigationIndexProvider.notifier).setIndex(4);
                 },
               ),
             ),
@@ -1342,7 +1397,14 @@ class HomeTabBody extends ConsumerWidget {
                 context: context,
                 label: 'Earnings',
                 icon: Icons.account_balance_wallet_outlined,
-                onTap: () => _showEarningsDialog(context),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PaymentsWalletScreen(),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),

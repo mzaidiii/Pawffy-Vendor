@@ -52,13 +52,6 @@ class _ChangeContactScreenState extends ConsumerState<ChangeContactScreen> {
       return;
     }
 
-    if (!widget.isPhone && _passwordCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your password for verification'), backgroundColor: AppColors.error),
-      );
-      return;
-    }
-
     setState(() => _isProcessing = true);
     final token = await StorageService.getToken();
     if (token == null) {
@@ -72,7 +65,6 @@ class _ChangeContactScreenState extends ConsumerState<ChangeContactScreen> {
       } else {
         await ref.read(authServiceProvider).requestEmailChange(
               newEmail: value,
-              password: _passwordCtrl.text.trim(),
               token: token,
             );
       }
@@ -252,20 +244,6 @@ class _ChangeContactScreenState extends ConsumerState<ChangeContactScreen> {
                           hintText: placeholder,
                         ),
                       ),
-                      if (!widget.isPhone) ...[
-                        const SizedBox(height: 16),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: _buildLabel('Current Password'),
-                        ),
-                        TextField(
-                          controller: _passwordCtrl,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            hintText: 'Enter password',
-                          ),
-                        ),
-                      ],
                     ] else ...[
                       // OTP Digit Verification View
                       Align(

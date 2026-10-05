@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class PetModel {
   final String id;
   final String name;
@@ -64,6 +66,43 @@ class RequestModel {
     this.pet,
   });
 
+  String get formattedDateTime {
+    final cleanTime = time.trim();
+    final cleanDate = date?.trim();
+
+    if ((cleanDate == null || cleanDate.isEmpty) && cleanTime.isEmpty) {
+      return 'N/A';
+    }
+
+    String formattedDateStr = '';
+    String formattedTimeStr = cleanTime;
+
+    if (cleanDate != null && cleanDate.isNotEmpty) {
+      try {
+        final parsedDate = DateTime.parse(cleanDate).toLocal();
+        formattedDateStr = DateFormat('dd MMM yyyy').format(parsedDate);
+        if ((formattedTimeStr.isEmpty || formattedTimeStr == '00:00' || formattedTimeStr == '00:00:00') &&
+            (parsedDate.hour != 0 || parsedDate.minute != 0)) {
+          formattedTimeStr = DateFormat('h:mm a').format(parsedDate);
+        }
+      } catch (_) {
+        formattedDateStr = cleanDate.split('T').first;
+      }
+    }
+
+    if (formattedTimeStr == '00:00' || formattedTimeStr == '00:00:00') {
+      formattedTimeStr = '';
+    }
+
+    if (formattedDateStr.isNotEmpty && formattedTimeStr.isNotEmpty) {
+      return '$formattedDateStr at $formattedTimeStr';
+    } else if (formattedDateStr.isNotEmpty) {
+      return formattedDateStr;
+    } else {
+      return formattedTimeStr;
+    }
+  }
+
   factory RequestModel.fromJson(Map<String, dynamic> json) {
     final petJson = json['pet'] as Map<String, dynamic>?;
     final serviceJson = json['service'] as Map<String, dynamic>?;
@@ -72,7 +111,7 @@ class RequestModel {
     final String priceStr = json['priceDisplay']?.toString() ?? (json['price'] != null ? '\$${json['price']}' : '\$0');
 
     // Handle date formatting if raw date exists
-    final String timeStr = json['time']?.toString() ?? '';
+    final String timeStr = json['time']?.toString() ?? json['bookingTime']?.toString() ?? json['booking_time']?.toString() ?? '';
 
     return RequestModel(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
@@ -81,7 +120,7 @@ class RequestModel {
       serviceType: json['serviceType']?.toString() ?? serviceJson?['serviceType']?.toString(),
       location: json['location']?.toString() ?? json['address']?.toString() ?? '',
       time: timeStr,
-      date: json['date']?.toString(),
+      date: json['date']?.toString() ?? json['bookingDate']?.toString() ?? json['booking_date']?.toString(),
       price: rawPrice,
       priceDisplay: priceStr,
       durationMinutes: json['durationMinutes'] as int? ?? json['duration'] as int? ?? 30,

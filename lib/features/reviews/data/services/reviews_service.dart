@@ -12,6 +12,23 @@ class ReviewsService {
     return Options(headers: {'Authorization': 'Bearer $token'});
   }
 
+  List<dynamic> _extractList(dynamic body) {
+    if (body == null) return [];
+    if (body is List) return body;
+    if (body is Map) {
+      if (body['data'] is List) return body['data'];
+      if (body['reviews'] is List) return body['reviews'];
+      if (body['customerReviews'] is List) return body['customerReviews'];
+      if (body['data'] is Map) {
+        final Map<String, dynamic> innerMap = Map<String, dynamic>.from(body['data']);
+        if (innerMap['data'] is List) return innerMap['data'];
+        if (innerMap['reviews'] is List) return innerMap['reviews'];
+        if (innerMap['customerReviews'] is List) return innerMap['customerReviews'];
+      }
+    }
+    return [];
+  }
+
   Future<List<CustomerReviewModel>> getReceivedReviews() async {
     try {
       final response = await _dio.get(
@@ -21,15 +38,13 @@ class ReviewsService {
       );
 
       final dynamic body = response.data;
-      if (body != null && body['success'] == true) {
-        final List<dynamic> list = body['data'] ?? [];
-        return list.map((json) => CustomerReviewModel.fromJson(json)).toList();
-      }
-      return [];
+      final List<dynamic> list = _extractList(body);
+      return list.map((json) => CustomerReviewModel.fromJson(Map<String, dynamic>.from(json))).toList();
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to load received reviews',
-      );
+      final String msg = (e.response?.data is Map && e.response?.data['message'] != null)
+          ? e.response!.data['message'].toString()
+          : 'Failed to load received reviews';
+      throw Exception(msg);
     }
   }
 
@@ -40,11 +55,12 @@ class ReviewsService {
         data: {'replyContent': replyContent},
         options: await _authHeader,
       );
-      return response.data != null && response.data['success'] == true;
+      return response.data != null && (response.data['success'] == true || response.statusCode == 200);
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to submit review reply',
-      );
+      final String msg = (e.response?.data is Map && e.response?.data['message'] != null)
+          ? e.response!.data['message'].toString()
+          : 'Failed to submit review reply';
+      throw Exception(msg);
     }
   }
 
@@ -63,11 +79,12 @@ class ReviewsService {
         },
         options: await _authHeader,
       );
-      return response.data != null && (response.data['success'] == true || response.statusCode == 201);
+      return response.data != null && (response.data['success'] == true || response.statusCode == 201 || response.statusCode == 200);
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to review customer',
-      );
+      final String msg = (e.response?.data is Map && e.response?.data['message'] != null)
+          ? e.response!.data['message'].toString()
+          : 'Failed to review customer';
+      throw Exception(msg);
     }
   }
 
@@ -80,21 +97,13 @@ class ReviewsService {
       );
 
       final dynamic body = response.data;
-      if (body != null && body['success'] == true) {
-        final dynamic dataField = body['data'];
-        List<dynamic> list = [];
-        if (dataField is List) {
-          list = dataField;
-        } else if (dataField is Map && dataField['data'] is List) {
-          list = dataField['data'];
-        }
-        return list.map((json) => VendorReviewModel.fromJson(json)).toList();
-      }
-      return [];
+      final List<dynamic> list = _extractList(body);
+      return list.map((json) => VendorReviewModel.fromJson(Map<String, dynamic>.from(json))).toList();
     } on DioException catch (e) {
-      throw Exception(
-        e.response?.data['message'] ?? 'Failed to load written reviews',
-      );
+      final String msg = (e.response?.data is Map && e.response?.data['message'] != null)
+          ? e.response!.data['message'].toString()
+          : 'Failed to load written reviews';
+      throw Exception(msg);
     }
   }
 }

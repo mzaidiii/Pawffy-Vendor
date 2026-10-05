@@ -6,6 +6,12 @@
 		<string>Pawffy needs your location to show nearby pet care providers.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 		<string>Pawffy needs your location to show nearby pet care providers.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Pawffy needs photo library access to upload profile pictures and pet service documentation.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Pawffy needs camera access to take profile photos and capture pet service updates.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Pawffy needs microphone access when recording videos for service updates.</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>

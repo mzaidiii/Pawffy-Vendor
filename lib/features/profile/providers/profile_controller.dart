@@ -122,7 +122,7 @@ final notificationPreferencesProvider =
 );
 
 final servicesControllerProvider =
-    AsyncNotifierProvider.autoDispose<ServicesController, List<VendorServiceModel>>(
+    AsyncNotifierProvider<ServicesController, List<VendorServiceModel>>(
   ServicesController.new,
 );
 
@@ -167,7 +167,7 @@ class ServicesController extends AsyncNotifier<List<VendorServiceModel>> {
       serviceLocation: serviceLocation,
     );
     ref.invalidate(profileControllerProvider);
-    ref.invalidateSelf();
+    await refresh();
   }
 
   Future<void> updateService({
@@ -197,13 +197,13 @@ class ServicesController extends AsyncNotifier<List<VendorServiceModel>> {
       serviceLocation: serviceLocation,
     );
     ref.invalidate(profileControllerProvider);
-    ref.invalidateSelf();
+    await refresh();
   }
 
   Future<void> deleteService(String serviceId) async {
     await ref.read(profileServiceProvider).deleteService(serviceId);
     ref.invalidate(profileControllerProvider);
-    ref.invalidateSelf();
+    await refresh();
   }
 }
 
