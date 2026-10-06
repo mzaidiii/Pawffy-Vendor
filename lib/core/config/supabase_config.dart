@@ -1,7 +1,7 @@
 class SupabaseConfig {
-  static const String url = ' https://grfbnpzcvkngtgwfbvdw.supabase.co';
+  static const String url = 'https://grfbnpzcvkngtgwfbvdw.supabase.co';
   static const String anonKey =
-      ' sb_publishable_hkgdmP70S50oSrWo7P47fw_D4eAZjJ2';
+      'sb_publishable_PaAbEAGhb4tuffWhFNPgxA_S3APuoch';
 
   static const bool useMockAuth = false;
 }

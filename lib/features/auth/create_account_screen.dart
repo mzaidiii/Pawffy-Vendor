@@ -62,8 +62,9 @@ class _CreateAccountScreenState extends ConsumerState<CreateAccountScreen> {
 
   String? _validatePhone(String value) {
     if (value.trim().isEmpty) return 'Phone number is required';
-    if (!value.startsWith('+'))
+    if (!value.startsWith('+')) {
       return 'Must start with + and country code (e.g. +1)';
+    }
     if (value.length < 10) return 'Enter a valid phone number';
     return null;
   }

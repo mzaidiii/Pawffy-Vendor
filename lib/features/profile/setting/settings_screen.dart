@@ -10,9 +10,7 @@ import 'package:pawffy/core/utils/image_picker_helper.dart';
 import 'package:pawffy/features/profile/providers/profile_controller.dart';
 
 // Settings sub-screens
-import 'personal_information_screen.dart';
 import 'view_personal_information_screen.dart';
-import 'change_password_screen.dart';
 import 'change_contact_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -62,12 +60,16 @@ class SettingsScreen extends ConsumerWidget {
                   children: [
                     GestureDetector(
                       onTap: () async {
-                        final source = await ImagePickerHelper.showSourceBottomSheet(context);
+                        final source =
+                            await ImagePickerHelper.showSourceBottomSheet(
+                              context,
+                            );
                         if (source != null) {
-                          final file = await ImagePickerHelper.pickImageWithPermission(
-                            context: context,
-                            source: source,
-                          );
+                          final file =
+                              await ImagePickerHelper.pickImageWithPermission(
+                                context: context,
+                                source: source,
+                              );
                           if (file != null) {
                             try {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -76,11 +78,15 @@ class SettingsScreen extends ConsumerWidget {
                                   duration: Duration(seconds: 2),
                                 ),
                               );
-                              await ref.read(profileControllerProvider.notifier).uploadAvatar(file.path);
+                              await ref
+                                  .read(profileControllerProvider.notifier)
+                                  .uploadAvatar(file.path);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Avatar updated successfully!'),
+                                    content: Text(
+                                      'Avatar updated successfully!',
+                                    ),
                                     backgroundColor: AppColors.success,
                                   ),
                                 );
@@ -89,7 +95,9 @@ class SettingsScreen extends ConsumerWidget {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Failed to upload avatar: $e'),
+                                    content: Text(
+                                      'Failed to upload avatar: $e',
+                                    ),
                                     backgroundColor: AppColors.error,
                                   ),
                                 );
@@ -380,17 +388,26 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _showDeleteAccountDialog(BuildContext context, WidgetRef ref) async {
+  Future<void> _showDeleteAccountDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
         return AlertDialog(
           backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 24),
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: AppColors.error,
+                size: 24,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Delete Account',
@@ -405,7 +422,9 @@ class SettingsScreen extends ConsumerWidget {
             'Are you sure you want to permanently delete your account? All your personal data, services, and profile information will be erased. This action cannot be undone.',
             style: GoogleFonts.inter(
               fontSize: 14,
-              color: isDark ? AppColors.white.withOpacity(0.8) : AppColors.black.withOpacity(0.8),
+              color: isDark
+                  ? AppColors.white.withOpacity(0.8)
+                  : AppColors.black.withOpacity(0.8),
             ),
           ),
           actions: [
@@ -422,7 +441,9 @@ class SettingsScreen extends ConsumerWidget {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.error,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(
@@ -768,7 +789,9 @@ class SettingsScreen extends ConsumerWidget {
           ),
           actions: [
             TextButton(
-              onPressed: isSubmitting ? null : () => Navigator.pop(dialogContext),
+              onPressed: isSubmitting
+                  ? null
+                  : () => Navigator.pop(dialogContext),
               child: const Text('CANCEL', style: TextStyle(color: Colors.grey)),
             ),
             Consumer(
@@ -803,7 +826,9 @@ class SettingsScreen extends ConsumerWidget {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Support ticket submitted successfully!'),
+                                content: Text(
+                                  'Support ticket submitted successfully!',
+                                ),
                                 backgroundColor: AppColors.success,
                               ),
                             );
@@ -866,7 +891,10 @@ class SettingsScreen extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                            const Icon(
+                              Icons.warning_amber_rounded,
+                              color: Colors.orange,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(

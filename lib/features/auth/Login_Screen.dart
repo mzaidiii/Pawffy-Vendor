@@ -40,8 +40,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   String? _validatePhone(String value) {
     if (value.trim().isEmpty) return 'Phone number is required';
-    if (!value.startsWith('+'))
+    if (!value.startsWith('+')) {
       return 'Must start with + and country code (e.g. +1)';
+    }
     if (value.length < 10) return 'Enter a valid phone number';
     return null;
   }
@@ -78,12 +79,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _otpFocus.requestFocus();
         }
       } else {
-        if (SupabaseConfig.anonKey == 'YOUR_SUPABASE_ANON_KEY' || SupabaseConfig.anonKey.isEmpty) {
-          throw Exception('Please configure your Supabase Anon Key in supabase_config.dart');
+        if (SupabaseConfig.anonKey == 'YOUR_SUPABASE_ANON_KEY' ||
+            SupabaseConfig.anonKey.isEmpty) {
+          throw Exception(
+            'Please configure your Supabase Anon Key in supabase_config.dart',
+          );
         }
-        await Supabase.instance.client.auth.signInWithOtp(
-          phone: phone,
-        );
+        await Supabase.instance.client.auth.signInWithOtp(phone: phone);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -130,8 +132,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           throw Exception('Invalid OTP code. Use "123456"');
         }
       } else {
-        if (SupabaseConfig.anonKey == 'YOUR_SUPABASE_ANON_KEY' || SupabaseConfig.anonKey.isEmpty) {
-          throw Exception('Please configure your Supabase Anon Key in supabase_config.dart');
+        if (SupabaseConfig.anonKey == 'YOUR_SUPABASE_ANON_KEY' ||
+            SupabaseConfig.anonKey.isEmpty) {
+          throw Exception(
+            'Please configure your Supabase Anon Key in supabase_config.dart',
+          );
         }
         final phone = _phoneController.text.trim();
         final response = await Supabase.instance.client.auth.verifyOTP(
