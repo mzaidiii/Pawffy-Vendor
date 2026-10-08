@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,98 @@ import 'package:pawffy/features/auth/create_account_screen.dart';
 import 'package:pawffy/features/onboarding/screens/onboarding_flow_screen.dart';
 import 'package:pawffy/features/onboarding/providers/onboarding_provider.dart';
 import 'package:pawffy/features/home/home_screen.dart';
+
+class Country {
+  final String name;
+  final String code;
+  final String dialCode;
+
+  const Country({
+    required this.name,
+    required this.code,
+    required this.dialCode,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Country &&
+          runtimeType == other.runtimeType &&
+          code == other.code &&
+          dialCode == other.dialCode;
+
+  @override
+  int get hashCode => code.hashCode ^ dialCode.hashCode;
+}
+
+const List<Country> _countries = [
+  Country(name: 'United States', code: 'US', dialCode: '+1'),
+  Country(name: 'United Kingdom', code: 'GB', dialCode: '+44'),
+  Country(name: 'Canada', code: 'CA', dialCode: '+1'),
+  Country(name: 'India', code: 'IN', dialCode: '+91'),
+  Country(name: 'Australia', code: 'AU', dialCode: '+61'),
+  Country(name: 'Afghanistan', code: 'AF', dialCode: '+93'),
+  Country(name: 'Albania', code: 'AL', dialCode: '+355'),
+  Country(name: 'Algeria', code: 'DZ', dialCode: '+213'),
+  Country(name: 'Argentina', code: 'AR', dialCode: '+54'),
+  Country(name: 'Austria', code: 'AT', dialCode: '+43'),
+  Country(name: 'Bahrain', code: 'BH', dialCode: '+973'),
+  Country(name: 'Bangladesh', code: 'BD', dialCode: '+880'),
+  Country(name: 'Belgium', code: 'BE', dialCode: '+32'),
+  Country(name: 'Brazil', code: 'BR', dialCode: '+55'),
+  Country(name: 'Chile', code: 'CL', dialCode: '+56'),
+  Country(name: 'China', code: 'CN', dialCode: '+86'),
+  Country(name: 'Colombia', code: 'CO', dialCode: '+57'),
+  Country(name: 'Czech Republic', code: 'CZ', dialCode: '+420'),
+  Country(name: 'Denmark', code: 'DK', dialCode: '+45'),
+  Country(name: 'Egypt', code: 'EG', dialCode: '+20'),
+  Country(name: 'Finland', code: 'FI', dialCode: '+358'),
+  Country(name: 'France', code: 'FR', dialCode: '+33'),
+  Country(name: 'Germany', code: 'DE', dialCode: '+49'),
+  Country(name: 'Greece', code: 'GR', dialCode: '+30'),
+  Country(name: 'Hong Kong', code: 'HK', dialCode: '+852'),
+  Country(name: 'Hungary', code: 'HU', dialCode: '+36'),
+  Country(name: 'Indonesia', code: 'ID', dialCode: '+62'),
+  Country(name: 'Ireland', code: 'IE', dialCode: '+353'),
+  Country(name: 'Israel', code: 'IL', dialCode: '+972'),
+  Country(name: 'Italy', code: 'IT', dialCode: '+39'),
+  Country(name: 'Japan', code: 'JP', dialCode: '+81'),
+  Country(name: 'Jordan', code: 'JO', dialCode: '+962'),
+  Country(name: 'Kenya', code: 'KE', dialCode: '+254'),
+  Country(name: 'Kuwait', code: 'KW', dialCode: '+965'),
+  Country(name: 'Lebanon', code: 'LB', dialCode: '+961'),
+  Country(name: 'Malaysia', code: 'MY', dialCode: '+60'),
+  Country(name: 'Mexico', code: 'MX', dialCode: '+52'),
+  Country(name: 'Morocco', code: 'MA', dialCode: '+212'),
+  Country(name: 'Nepal', code: 'NP', dialCode: '+977'),
+  Country(name: 'Netherlands', code: 'NL', dialCode: '+31'),
+  Country(name: 'New Zealand', code: 'NZ', dialCode: '+64'),
+  Country(name: 'Nigeria', code: 'NG', dialCode: '+234'),
+  Country(name: 'Norway', code: 'NO', dialCode: '+47'),
+  Country(name: 'Oman', code: 'OM', dialCode: '+968'),
+  Country(name: 'Pakistan', code: 'PK', dialCode: '+92'),
+  Country(name: 'Peru', code: 'PE', dialCode: '+51'),
+  Country(name: 'Philippines', code: 'PH', dialCode: '+63'),
+  Country(name: 'Poland', code: 'PL', dialCode: '+48'),
+  Country(name: 'Portugal', code: 'PT', dialCode: '+351'),
+  Country(name: 'Qatar', code: 'QA', dialCode: '+974'),
+  Country(name: 'Romania', code: 'RO', dialCode: '+40'),
+  Country(name: 'Russia', code: 'RU', dialCode: '+7'),
+  Country(name: 'Saudi Arabia', code: 'SA', dialCode: '+966'),
+  Country(name: 'Singapore', code: 'SG', dialCode: '+65'),
+  Country(name: 'South Africa', code: 'ZA', dialCode: '+27'),
+  Country(name: 'South Korea', code: 'KR', dialCode: '+82'),
+  Country(name: 'Spain', code: 'ES', dialCode: '+34'),
+  Country(name: 'Sri Lanka', code: 'LK', dialCode: '+94'),
+  Country(name: 'Sweden', code: 'SE', dialCode: '+46'),
+  Country(name: 'Switzerland', code: 'CH', dialCode: '+41'),
+  Country(name: 'Taiwan', code: 'TW', dialCode: '+886'),
+  Country(name: 'Thailand', code: 'TH', dialCode: '+66'),
+  Country(name: 'Turkey', code: 'TR', dialCode: '+90'),
+  Country(name: 'Ukraine', code: 'UA', dialCode: '+380'),
+  Country(name: 'United Arab Emirates', code: 'AE', dialCode: '+971'),
+  Country(name: 'Vietnam', code: 'VN', dialCode: '+84'),
+];
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -23,6 +116,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _phoneFocus = FocusNode();
   final _otpFocus = FocusNode();
 
+  Country _selectedCountry = _countries.first;
+  String _lastSentPhone = '';
+
   bool _otpSent = false;
   bool _isLoading = false;
 
@@ -30,7 +126,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _otpError;
 
   @override
+  void initState() {
+    super.initState();
+    _phoneFocus.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
+    _phoneFocus.removeListener(_onFocusChange);
     _phoneController.dispose();
     _otpController.dispose();
     _phoneFocus.dispose();
@@ -38,12 +145,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  String? _validatePhone(String value) {
-    if (value.trim().isEmpty) return 'Phone number is required';
-    if (!value.startsWith('+')) {
-      return 'Must start with + and country code (e.g. +1)';
+  String _flag(String code) => code
+      .toUpperCase()
+      .codeUnits
+      .map((c) => String.fromCharCode(0x1F1E6 + c - 65))
+      .join();
+
+  String _getFullPhoneNumber() {
+    String text = _phoneController.text.trim();
+    text = text.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    if (text.startsWith('+')) {
+      return text;
     }
-    if (value.length < 10) return 'Enter a valid phone number';
+    if (text.startsWith('0')) {
+      text = text.substring(1);
+    }
+    return '${_selectedCountry.dialCode}$text';
+  }
+
+  String? _validatePhone(String value) {
+    final cleaned = value.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    if (cleaned.isEmpty) return 'Phone number is required';
+    if (cleaned.startsWith('+')) {
+      if (cleaned.length < 8) return 'Enter a valid phone number';
+      return null;
+    }
+    if (!RegExp(r'^[0-9]+$').hasMatch(cleaned)) {
+      return 'Enter valid digits only';
+    }
+    if (cleaned.length < 6) return 'Phone number is too short';
+    if (cleaned.length > 15) return 'Phone number is too long';
     return null;
   }
 
@@ -53,11 +184,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return null;
   }
 
+  void _showTermsDialog(BuildContext context, String title) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          title,
+          style: GoogleFonts.archivoBlack(color: Colors.white, fontSize: 18),
+        ),
+        content: Text(
+          'Please visit our website or contact support for full details regarding our $title.',
+          style: GoogleFonts.barlow(color: Colors.white70, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'OK',
+              style: GoogleFonts.barlow(
+                color: const Color(0xFFE85D04),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleSendOtp() async {
-    final phone = _phoneController.text.trim();
-    final error = _validatePhone(phone);
+    final error = _validatePhone(_phoneController.text.trim());
     setState(() => _phoneError = error);
     if (error != null) return;
+
+    final fullPhone = _getFullPhoneNumber();
 
     setState(() => _isLoading = true);
 
@@ -73,6 +235,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           );
           setState(() {
+            _lastSentPhone = fullPhone;
             _otpSent = true;
             _isLoading = false;
           });
@@ -85,7 +248,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             'Please configure your Supabase Anon Key in supabase_config.dart',
           );
         }
-        await Supabase.instance.client.auth.signInWithOtp(phone: phone);
+        await Supabase.instance.client.auth.signInWithOtp(phone: fullPhone);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -94,6 +257,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           );
           setState(() {
+            _lastSentPhone = fullPhone;
             _otpSent = true;
             _isLoading = false;
           });
@@ -138,7 +302,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             'Please configure your Supabase Anon Key in supabase_config.dart',
           );
         }
-        final phone = _phoneController.text.trim();
+        final phone = _lastSentPhone.isNotEmpty
+            ? _lastSentPhone
+            : _getFullPhoneNumber();
         final response = await Supabase.instance.client.auth.verifyOTP(
           type: OtpType.sms,
           phone: phone,
@@ -299,31 +465,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 SizedBox(height: size.height * 0.08),
 
-                // Phone number field
-                _buildTextField(
-                  controller: _phoneController,
-                  focusNode: _phoneFocus,
-                  hint: 'Phone Number (e.g. +15551234567)',
-                  icon: Icons.phone,
-                  errorText: _phoneError,
-                  keyboardType: TextInputType.phone,
+                // Phone number field with country dropdown
+                _buildPhoneField(
                   isDark: isDark,
                   readOnly: _otpSent && !_isLoading,
-                  onChanged: (_) {
-                    if (_phoneError != null) {
-                      setState(
-                        () =>
-                            _phoneError = _validatePhone(_phoneController.text),
-                      );
-                    }
-                  },
-                  onSubmitted: (_) {
-                    if (!_otpSent) {
-                      _handleSendOtp();
-                    } else {
-                      _otpFocus.requestFocus();
-                    }
-                  },
                 ),
                 const SizedBox(height: 14),
 
@@ -355,7 +500,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: GestureDetector(
                       onTap: _isLoading
                           ? null
-                          : () => setState(() => _otpSent = false),
+                          : () => setState(() {
+                              _otpSent = false;
+                              _otpController.clear();
+                              _otpError = null;
+                            }),
                       child: Text(
                         'Change phone number?',
                         style: GoogleFonts.barlow(
@@ -378,7 +527,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     foregroundColor: Colors.white,
                     disabledBackgroundColor: const Color(
                       0xFFE85D04,
-                    ).withOpacity(0.6),
+                    ).withValues(alpha: 0.6),
                     minimumSize: const Size(double.infinity, 52),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -409,6 +558,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ],
                         ),
                 ),
+
+                // Terms + consent text (phone entry step only)
+                if (!_otpSent) ...[
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: GoogleFonts.barlow(
+                          fontSize: 12,
+                          height: 1.45,
+                          color: Colors.white.withValues(alpha: 0.65),
+                        ),
+                        children: [
+                          const TextSpan(
+                            text: 'By continuing, you agree to our ',
+                          ),
+                          TextSpan(
+                            text: 'Terms of Service',
+                            style: GoogleFonts.barlow(
+                              color: const Color(0xFFE85D04),
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                              decorationColor: const Color(0xFFE85D04),
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () =>
+                                  _showTermsDialog(context, 'Terms of Service'),
+                          ),
+                          const TextSpan(text: ' and '),
+                          TextSpan(
+                            text: 'Privacy Policy',
+                            style: GoogleFonts.barlow(
+                              color: const Color(0xFFE85D04),
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                              decorationColor: const Color(0xFFE85D04),
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () =>
+                                  _showTermsDialog(context, 'Privacy Policy'),
+                          ),
+                          const TextSpan(
+                            text:
+                                '. You consent to receive SMS verification codes from ThePawffy. Message frequency varies. Message & data rates may apply.',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+
                 const SizedBox(height: 22),
 
                 GestureDetector(
@@ -449,6 +651,138 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPhoneField({required bool isDark, bool readOnly = false}) {
+    final fillColor = isDark
+        ? const Color(0xFF232323)
+        : const Color(0xFFF2F2F2);
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final hintColor = Colors.grey;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: fillColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _phoneError != null
+                  ? Colors.redAccent
+                  : (_phoneFocus.hasFocus
+                        ? const Color(0xFFE85D04)
+                        : Colors.transparent),
+              width: _phoneError != null ? 1.2 : 1.5,
+            ),
+          ),
+          padding: const EdgeInsets.only(left: 12, right: 12),
+          child: Row(
+            children: [
+              // Country Code Dropdown (flag + dial code)
+              DropdownButtonHideUnderline(
+                child: DropdownButton<Country>(
+                  value: _selectedCountry,
+                  isDense: true,
+                  dropdownColor: const Color(0xFF232323),
+                  borderRadius: BorderRadius.circular(12),
+                  menuMaxHeight: 350,
+                  icon: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Colors.grey,
+                    size: 18,
+                  ),
+                  items: _countries.map((country) {
+                    return DropdownMenuItem<Country>(
+                      value: country,
+                      child: Text(
+                        '${_flag(country.code)}  ${country.dialCode}',
+                        style: GoogleFonts.barlow(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: readOnly
+                      ? null
+                      : (val) {
+                          if (val != null) {
+                            setState(() => _selectedCountry = val);
+                          }
+                        },
+                ),
+              ),
+              Container(
+                height: 22,
+                width: 1,
+                color: Colors.grey.withValues(alpha: 0.3),
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+              ),
+              // Phone Input Field
+              Expanded(
+                child: TextField(
+                  controller: _phoneController,
+                  focusNode: _phoneFocus,
+                  readOnly: readOnly,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.done,
+                  style: GoogleFonts.barlow(color: textColor, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Phone number',
+                    hintStyle: GoogleFonts.barlow(
+                      color: hintColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    filled: false,
+                    fillColor: Colors.transparent,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onChanged: (_) {
+                    if (_phoneError != null) {
+                      setState(() {
+                        _phoneError = _validatePhone(
+                          _phoneController.text.trim(),
+                        );
+                      });
+                    }
+                  },
+                  onSubmitted: (_) {
+                    if (!_otpSent) {
+                      _handleSendOtp();
+                    } else {
+                      _otpFocus.requestFocus();
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_phoneError != null) ...[
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: Text(
+              _phoneError!,
+              style: GoogleFonts.barlow(
+                color: Colors.redAccent,
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
